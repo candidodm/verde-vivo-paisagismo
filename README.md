@@ -1,7 +1,7 @@
 # 🌿 Verde Vivo Paisagismo
 
 Sistema web de solicitação e acompanhamento de serviços de paisagismo.  
-**Projeto Integrador — Centro Universitário SENAC · 2025**
+**Projeto Integrador — Centro Universitário SENAC · 2026**
 
 ---
 
@@ -91,29 +91,7 @@ cd verde-vivo-paisagismo
 ```
 Ou baixe o ZIP pelo botão **Code → Download ZIP** na página do repositório.
 
-**Passo 2 — Configure o Firebase**
-
-1. Acesse [console.firebase.google.com](https://console.firebase.google.com) e crie um projeto
-2. Crie o banco **Firestore Database** em modo de teste, região `southamerica-east1`
-3. Vá em **Configurações do projeto → Seus aplicativos → Web** e registre um app
-4. Copie o objeto `firebaseConfig` gerado
-
-**Passo 3 — Cole as credenciais nos arquivos**
-
-Abra `index.html`, `acompanhar.html` e `admin.html` e substitua o bloco:
-
-```javascript
-const firebaseConfig = {
-  apiKey: "AIzaSyDpK1BJ1aB_o9Fl0peN0qalmrvqfZaz0zc",
-  authDomain: "verde-vivo-e6afd.firebaseapp.com",
-  projectId: "verde-vivo-e6afd",
-  storageBucket: "verde-vivo-e6afd.firebasestorage.app",
-  messagingSenderId: "1045427152542",
-  appId: "1:1045427152542:web:153a3d5f38d25cecd73d8f"
-};
-```
-
-**Passo 4 — Abra no navegador**
+**Passo 2 — Abra no navegador**
 
 Abra o arquivo `index.html` diretamente no navegador (duplo clique ou arraste para o Chrome).
 
@@ -146,4 +124,4 @@ Abra o arquivo `index.html` diretamente no navegador (duplo clique ou arraste pa
 **Professor:** Me. Anderson Lopes  
 **Instituição:** Centro Universitário SENAC  
 **Curso:** Desenvolvimento de Sistemas Orientado a Dispositivos Móveis e Baseados na Web  
-**Ano:** 2025
+**Ano:** 2026
