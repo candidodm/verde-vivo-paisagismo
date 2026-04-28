@@ -123,5 +123,5 @@ Abra o arquivo `index.html` diretamente no navegador (duplo clique ou arraste pa
 
 **Professor:** Me. Anderson Lopes  
 **Instituição:** Centro Universitário SENAC  
-**Curso:** Desenvolvimento de Sistemas Orientado a Dispositivos Móveis e Baseados na Web  
+**Disciplina:** Desenvolvimento de Sistemas Orientado a Dispositivos Móveis e Baseados na Web  
 **Ano:** 2026
