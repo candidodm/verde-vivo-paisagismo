@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verde Vivo — Acompanhar Solicitação</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --verde-escuro: #1a3a2a;
+      --verde-medio: #2d5a3d;
+      --verde-vivo: #4a8c5c;
+      --verde-claro: #7ab88a;
+      --folha: #a8d5b5;
+      --creme: #f5f0e8;
+      --creme-escuro: #e8e0d0;
+      --texto: #1a2e1f;
+      --texto-suave: #4a6355;
+      --branco: #ffffff;
+    }
+
+    body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--texto); min-height: 100vh; }
+
+    nav {
+      background: var(--verde-escuro);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--folha);
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--verde-claro); font-weight: 400; }
+
+    nav ul { list-style: none; display: flex; gap: 2rem; }
+    nav ul a { color: var(--folha); text-decoration: none; font-size: 0.9rem; opacity: 0.8; transition: opacity 0.2s; }
+    nav ul a:hover, nav ul a.ativo { opacity: 1; }
+    nav ul a.ativo { border-bottom: 1px solid var(--verde-claro); padding-bottom: 2px; }
+
+    .hero {
+      background: var(--verde-escuro);
+      padding: 3rem 2rem 3.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(74,140,92,0.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(168,213,181,0.15);
+      border: 1px solid rgba(168,213,181,0.3);
+      color: var(--folha);
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 1.2rem;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      color: var(--branco);
+      font-weight: 400;
+      margin-bottom: 0.7rem;
+    }
+
+    .hero h1 em { color: var(--folha); font-style: italic; }
+    .hero p { color: rgba(168,213,181,0.75); font-size: 0.95rem; font-weight: 300; }
+
+    main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+    /* ── BUSCA ── */
+    .busca-card {
+      background: var(--branco);
+      border: 1px solid var(--creme-escuro);
+      border-radius: 14px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 12px rgba(26,58,42,0.06);
+      margin-bottom: 2rem;
+    }
+
+    .busca-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--verde-escuro);
+      margin-bottom: 1rem;
+    }
+
+    .busca-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .busca-row input {
+      flex: 1;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--texto);
+      background: var(--creme);
+      border: 1px solid var(--creme-escuro);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .busca-row input:focus {
+      border-color: var(--verde-vivo);
+      box-shadow: 0 0 0 3px rgba(74,140,92,0.1);
+      background: var(--branco);
+    }
+
+    .btn-buscar {
+      padding: 0.65rem 1.25rem;
+      background: var(--verde-escuro);
+      color: var(--branco);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-buscar:hover { background: var(--verde-medio); }
+
+    .ou-divisor {
+      text-align: center;
+      color: #9aaba3;
+      font-size: 0.82rem;
+      margin: 1rem 0 0.75rem;
+      position: relative;
+    }
+
+    .ou-divisor::before, .ou-divisor::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 42%;
+      height: 1px;
+      background: var(--creme-escuro);
+    }
+
+    .ou-divisor::before { left: 0; }
+    .ou-divisor::after { right: 0; }
+
+    .btn-ver-todos {
+      width: 100%;
+      padding: 0.65rem;
+      background: transparent;
+      color: var(--verde-vivo);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1.5px solid var(--verde-claro);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-ver-todos:hover { background: rgba(74,140,92,0.06); }
+
+    /* ── LISTA ── */
+    #lista-solicitacoes { display: flex; flex-direction: column; gap: 1rem; }
+
+    .solicitacao-card {
+      background: var(--branco);
+      border: 1px solid var(--creme-escuro);
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 2px 8px rgba(26,58,42,0.05);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.25rem 1rem;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .sol-protocolo {
+      font-size: 0.78rem;
+      color: #9aaba3;
+      letter-spacing: 0.06em;
+      font-family: monospace;
+      grid-column: 1;
+    }
+
+    .sol-nome {
+      font-weight: 500;
+      font-size: 1rem;
+      color: var(--verde-escuro);
+      grid-column: 1;
+    }
+
+    .sol-servico {
+      font-size: 0.88rem;
+      color: var(--texto-suave);
+      grid-column: 1;
+    }
+
+    .sol-data {
+      font-size: 0.78rem;
+      color: #9aaba3;
+      grid-column: 1;
+      margin-top: 2px;
+    }
+
+    .sol-descricao {
+      font-size: 0.88rem;
+      color: var(--texto-suave);
+      grid-column: 1 / -1;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--creme-escuro);
+      line-height: 1.5;
+    }
+
+    .sol-foto {
+      grid-column: 1 / -1;
+      margin-top: 0.5rem;
+    }
+
+    .sol-foto img {
+      max-width: 100%;
+      max-height: 160px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    /* ── BADGE STATUS ── */
+    .badge-status {
+      grid-row: 1 / 3;
+      grid-column: 2;
+      align-self: center;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .badge-status.solicitado  { background: #fff8e1; color: #8b6914; }
+    .badge-status.em-execucao { background: #e3f2e8; color: #1a6b38; }
+    .badge-status.concluido   { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+    .badge-status.cancelado   { background: #fce4e4; color: #7b1f1f; }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .solicitado  .dot { background: #f9a825; }
+    .em-execucao .dot { background: #2e7d32; animation: pulse 1.5s infinite; }
+    .concluido   .dot { background: #388e3c; }
+    .cancelado   .dot { background: #c62828; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.8); }
+    }
+
+    /* ── STEPPER ── */
+    .sol-stepper {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-top: 0.75rem;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--creme-escuro);
+      background: var(--creme);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #9aaba3;
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s;
+    }
+
+    .step-label {
+      font-size: 0.72rem;
+      color: #9aaba3;
+      margin-top: 4px;
+    }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: var(--creme-escuro);
+      margin-top: -14px;
+    }
+
+    .step.ativo .step-circle {
+      background: var(--verde-escuro);
+      border-color: var(--verde-escuro);
+      color: var(--branco);
+    }
+
+    .step.ativo .step-label { color: var(--verde-escuro); font-weight: 500; }
+
+    .step.completo .step-circle {
+      background: var(--verde-vivo);
+      border-color: var(--verde-vivo);
+      color: var(--branco);
+    }
+
+    .step.completo .step-label { color: var(--verde-vivo); }
+    .step-line.completo { background: var(--verde-vivo); }
+
+    /* ── ESTADOS VAZIOS/LOADING ── */
+    .estado-vazio {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #9aaba3;
+    }
+
+    .estado-vazio svg { margin-bottom: 0.75rem; opacity: 0.4; }
+    .estado-vazio p { font-size: 0.9rem; }
+
+    .loading-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 3rem;
+    }
+
+    .loading-dots span {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--verde-claro);
+      animation: bounce 0.6s ease-in-out infinite;
+    }
+
+    .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    footer { text-align: center; padding: 2rem; font-size: 0.8rem; color: #9aaba3; border-top: 1px solid var(--creme-escuro); }
+
+    @media (max-width: 520px) {
+      nav ul { display: none; }
+      .busca-row { flex-direction: column; }
+      .sol-stepper { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .step-line { width: 2px; height: 20px; margin: 0 14px; }
+      .step { flex-direction: row; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="index.html">Verde <span>Vivo</span></a>
+    <ul>
+      <li><a href="index.html">Solicitar Serviço</a></li>
+      <li><a href="acompanhar.html" class="ativo">Acompanhar</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-tag">Acompanhamento</div>
+    <h1>Veja o status do<br><em>seu serviço</em></h1>
+    <p>Busque pelo seu protocolo ou telefone.</p>
+  </div>
+
+  <main>
+
+    <div class="busca-card">
+      <h2>Buscar solicitação</h2>
+      <div class="busca-row">
+        <input type="text" id="campo-busca" placeholder="Digite o protocolo (ex: VVABC123) ou seu telefone" />
+        <button class="btn-buscar" onclick="buscar()">Buscar</button>
+      </div>
+      <div class="ou-divisor">ou</div>
+      <button class="btn-ver-todos" onclick="carregarTodos()">Ver todas as solicitações recentes</button>
+    </div>
+
+    <div id="lista-solicitacoes">
+      <div class="estado-vazio">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <p>Busque pelo seu protocolo ou telefone,<br>ou clique em "Ver todas" para listar as recentes.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>© 2025 Verde Vivo Paisagismo. Projeto Integrador — SENAC.</footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, query, where, orderBy, limit, getDocs }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // ── COLE AQUI SUA CONFIGURAÇÃO DO FIREBASE ────────────────────────────────
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpK1BJ1aB_o9Fl0peN0qalmrvqfZaz0zc",
+  authDomain: "verde-vivo-e6afd.firebaseapp.com",
+  projectId: "verde-vivo-e6afd",
+  storageBucket: "verde-vivo-e6afd.firebasestorage.app",
+  messagingSenderId: "1045427152542",
+  appId: "1:1045427152542:web:153a3d5f38d25cecd73d8f"
+    };
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const lista = document.getElementById('lista-solicitacoes');
+
+    function mostrarLoading() {
+      lista.innerHTML = `<div class="loading-dots"><span></span><span></span><span></span></div>`;
+    }
+
+    function formatarData(ts) {
+      if (!ts) return '—';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function stepperHTML(status) {
+      const etapas = ['Solicitado', 'Em Execução', 'Concluído'];
+      const idx = etapas.indexOf(status);
+      const html = [];
+      etapas.forEach((etapa, i) => {
+        const cls = i < idx ? 'completo' : i === idx ? 'ativo' : '';
+        const simbolo = i < idx ? '✓' : i + 1;
+        html.push(`<div class="step ${cls}"><div class="step-circle">${simbolo}</div><div class="step-label">${etapa}</div></div>`);
+        if (i < etapas.length - 1) {
+          html.push(`<div class="step-line ${i < idx ? 'completo' : ''}"></div>`);
+        }
+      });
+      return `<div class="sol-stepper">${html.join('')}</div>`;
+    }
+
+    function badgeCSS(status) {
+      const map = {
+        'Solicitado': 'solicitado',
+        'Em Execução': 'em-execucao',
+        'Concluído': 'concluido',
+        'Cancelado': 'cancelado'
+      };
+      return map[status] || 'solicitado';
+    }
+
+    function renderCards(docs) {
+      if (docs.length === 0) {
+        lista.innerHTML = `<div class="estado-vazio"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>Nenhuma solicitação encontrada.</p></div>`;
+        return;
+      }
+
+      lista.innerHTML = docs.map(doc => {
+        const d = doc.data();
+        const cls = badgeCSS(d.status);
+        return `
+          <div class="solicitacao-card">
+            <div class="sol-protocolo">${d.protocolo || '—'}</div>
+            <div class="badge-status ${cls}"><span class="dot"></span>${d.status}</div>
+            <div class="sol-nome">${d.nome}</div>
+            <div class="sol-servico">${d.tipoServico}</div>
+            <div class="sol-data">Enviado em: ${formatarData(d.criadoEm)}</div>
+            ${stepperHTML(d.status)}
+            <div class="sol-descricao">${d.descricao}</div>
+            ${d.foto ? `<div class="sol-foto"><img src="${d.foto}" alt="Foto do local" /></div>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    window.buscar = async () => {
+      const termo = document.getElementById('campo-busca').value.trim();
+      if (!termo) return;
+      mostrarLoading();
+
+      try {
+        const snapProtocolo = await getDocs(query(
+          collection(db, 'solicitacoes'),
+          where('protocolo', '==', termo.toUpperCase())
+        ));
+
+        if (!snapProtocolo.empty) {
+          renderCards(snapProtocolo.docs);
+          return;
+        }
+
+        const snapTel = await getDocs(query(
+          collection(db, 'solicitacoes'),
+          where('telefone', '==', termo)
+        ));
+
+        renderCards(snapTel.docs);
+
+      } catch (err) {
+        console.error(err);
+        lista.innerHTML = `<div class="estado-vazio"><p>Erro ao buscar. Verifique sua conexão.</p></div>`;
+      }
+    };
+
+    window.carregarTodos = async () => {
+      mostrarLoading();
+      try {
+        const snap = await getDocs(query(
+          collection(db, 'solicitacoes'),
+          orderBy('criadoEm', 'desc'),
+          limit(20)
+        ));
+        renderCards(snap.docs);
+      } catch (err) {
+        console.error(err);
+        lista.innerHTML = `<div class="estado-vazio"><p>Erro ao carregar. Verifique sua conexão.</p></div>`;
+      }
+    };
+
+    // Busca ao pressionar Enter
+    document.getElementById('campo-busca').addEventListener('keydown', e => {
+      if (e.key === 'Enter') window.buscar();
+    });
+  </script>
+</body>
+</html>
