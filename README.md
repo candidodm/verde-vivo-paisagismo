@@ -115,7 +115,7 @@ Abra o arquivo `index.html` diretamente no navegador (duplo clique ou arraste pa
 | Delfino Maurício Cândido | [@candidodm](https://github.com/candidodm) |
 | Gabriel de Castro Silva | (inserir username) |
 | Gabriela Rodrigues Guimarães | (inserir username) |
-| João Pedro Barcellos Correa | [@legonnexon] |
+| João Pedro Barcellos Correa | [@legonnexon](https://github.com/legonnexon) |
 | José Marcio Canto Oliveira | (inserir username) |
 | Larissa Soares Conceição | (inserir username) |
 | Pedro Henrique Beltrão de Souza | (inserir username) |
