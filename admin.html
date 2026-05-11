@@ -2,9 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verde Vivo — Painel Administrativo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,7 +23,13 @@
       --branco: #ffffff;
     }
 
-    body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--texto); min-height: 100vh; }
+    body { 
+      font-family: 'DM Sans', sans-serif; 
+      background: var(--creme); 
+      color: var(--texto); 
+      height: 100vh; 
+      overflow-x: hidden; 
+    }
 
     /* ── NAV ADMIN ── */
     nav {
@@ -55,22 +62,40 @@
 
     /* ── TELA DE LOGIN ── */
     #tela-login {
-      min-height: calc(100vh - 64px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
+      display: grid;
+      place-items: center;
+      height: 100vh;
     }
 
     .login-card {
-      background: var(--branco);
-      border: 1px solid var(--creme-escuro);
+      background-color: var(--verde-medio);
       border-radius: 16px;
-      padding: 2.5rem;
       width: 100%;
-      max-width: 380px;
+      max-width: 860px;
+      height: 500px;
       box-shadow: 0 4px 24px rgba(26,58,42,0.1);
-      text-align: center;
+      text-align: start;
+      padding: 2rem;
+    }
+
+    .login-card label {
+      color: #E1F5EE;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 575px) {
+      .login-card { 
+        padding: 0; 
+        border-radius: 0; 
+        height: 100vh;
+        box-shadow:none;
+      }
+
+      html {
+        background: var(--verde-medio);
+      }
+      
     }
 
     .login-logo {
@@ -81,32 +106,6 @@
     }
 
     .login-logo span { color: var(--verde-vivo); }
-
-    .login-card p {
-      color: var(--texto-suave);
-      font-size: 0.88rem;
-      margin-bottom: 1.75rem;
-    }
-
-    .login-card input {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.95rem;
-      color: var(--texto);
-      background: var(--creme);
-      border: 1px solid var(--creme-escuro);
-      border-radius: 8px;
-      padding: 0.7rem 0.9rem;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      margin-bottom: 0.75rem;
-    }
-
-    .login-card input:focus {
-      border-color: var(--verde-vivo);
-      box-shadow: 0 0 0 3px rgba(74,140,92,0.1);
-      background: var(--branco);
-    }
 
     .btn-login {
       width: 100%;
@@ -408,16 +407,65 @@
     @media (max-width: 600px) {
       .painel-header, .filtros, .lista-admin { padding-left: 1rem; padding-right: 1rem; }
     }
+
+    /* Custom by Joao */
+    .title {
+      color: #E1F5EE;
+    }
+    .desc {
+      color: #9FE1CB;
+    }
   </style>
 </head>
-<body>
-
+<body >
+  <!-- Tela de login -->
+  <main id="tela-login" class="row">
+    <section class="login-card d-flex flex-column flex-sm-row align-items-stretch gap-0">
+      <section class="col-sm p-5 d-flex flex-column align-items-start justify-content-center gap-3 text-start" style="color: #F8C662;">
+        <div class="nav-logo h-25 fs-3" style>Verde vivo</div>
+        <div class="h-75">
+          <p class="mb-1" style="color: #5DCAA5;font-size: 0.70rem; letter-spacing: 0.1em;">AREA RESTRITA</p>
+          <h1 class="fw-semibold fs-4 mb-4 title">Painel de gestão de serviços</h1>
+          <p class="text-wrap fs-6 desc">Acesse e gerencia todas as solicitações de paisagismo, atualize estatus e acompanhe o histórico de atendimentos</p>
+        </div>
+      </section>
+      <div class="d-none d-sm-block" style="width: 1px; align-self: stretch; margin: 0 1.5rem; background: rgba(255, 255, 255, 0.35);"></div>
+      <hr class="mx-4 d-block d-sm-none" style="border-color: rgba(255, 255, 255, 0.35);">
+      <!-- Login Side -->
+      <section class="col-sm p-0" style="display: grid; place-items: center;">
+        <form onsubmit="event.preventDefault(); fazerLogin();">
+          <p class="fw-bold fs-3 mb-0 title">Entrar no painel</p>
+          <p class="desc">Use suas credenciais para acessar o sistema.</p>
+          <div class="mb-3">
+            <label for="input-usuario" class="form-label">Usuario</label>
+            <input type="text" class="form-control" id="input-usuario" aria-describedby="emailHelp">
+          </div>
+          <div class="mb-3">
+            <label for="input-senha" class="form-label">Senha</label>
+            <input type="password" class="form-control" id="input-senha">
+          </div>
+          <div class="mb-3 form-check d-flex flex-row align-items-center justify-content-between">
+            <div>
+              <input type="checkbox" class="form-check-input" id="exampleCheck1">
+              <label class="form-check-label" for="exampleCheck1">Lembrar Acesso</label>
+            </div>
+            <div>
+              <button type="submit" class="btn btn-primary">Esqueci a senha</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Entrar</button>
+          <p class="login-erro" id="login-erro">Usuário ou senha incorretos.</p>
+        </form>
+      </section>
+    </section>
+  </main>
+<!--
   <nav>
     <a class="nav-logo" href="index.html">Verde <span>Vivo</span></a>
     <span class="nav-badge">PAINEL ADMIN</span>
   </nav>
 
-  <!-- Tela de login -->
+   
   <div id="tela-login">
     <div class="login-card">
       <div class="login-logo">Verde <span>Vivo</span></div>
@@ -428,7 +476,7 @@
       <p class="login-erro" id="login-erro">Usuário ou senha incorretos.</p>
     </div>
   </div>
-
+-->
   <!-- Painel -->
   <div id="tela-painel">
     <div class="painel-header">
