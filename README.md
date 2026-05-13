@@ -19,7 +19,8 @@ Sistema web de solicitação e acompanhamento de serviços de paisagismo.
 
 ## 🎬 Vídeo de Demonstração
 
-> ⏳ Em breve.
+Link do vídeo demonstrando o funcionamento da aplicação:
+https://www.youtube.com/shorts/gwSLjm6oW7w
 
 ---
 
