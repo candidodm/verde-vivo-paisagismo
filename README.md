@@ -117,7 +117,7 @@ Abra o arquivo `index.html` diretamente no navegador (duplo clique ou arraste pa
 | Gabriel de Castro Silva | [@gabriellztech](https://github.com/gabriellztech) 
 | Gabriela Rodrigues Guimarães | [@gabriela221291](https://github.com/gabriela221291) |
 | João Pedro Barcellos Correa | [@legonnexon](https://github.com/legonnexon) |
-| José Marcio Canto Oliveira | (inserir username) |
+| José Marcio Canto Oliveira | [@marciocanto](https://github.com/marciocanto) |
 | Larissa Soares Conceição | [@larissasoares06](https://github.com/larissasoares06) |
 | Pedro Henrique Beltrão de Souza | [@pedrohenrique-cyber](https://github.com/pedrohenrique-cyber) |
 | Roger Alves da Silva | [@rogeralves1704](https://github.com/rogeralves1704) |
