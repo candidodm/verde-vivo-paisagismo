@@ -114,7 +114,7 @@ Abra o arquivo `index.html` diretamente no navegador (duplo clique ou arraste pa
 | Nome | GitHub |
 |---|---|
 | Delfino Maurício Cândido | [@candidodm](https://github.com/candidodm) |
-| Gabriel de Castro Silva | (inserir username) |
+| Gabriel de Castro Silva | [@gabriellztech](https://github.com/gabriellztech) 
 | Gabriela Rodrigues Guimarães | [@gabriela221291](https://github.com/gabriela221291) |
 | João Pedro Barcellos Correa | [@legonnexon](https://github.com/legonnexon) |
 | José Marcio Canto Oliveira | (inserir username) |
