@@ -11,7 +11,9 @@ Sistema web de solicitação e acompanhamento de serviços de paisagismo.
 |---|---|
 | Formulário de Solicitação | [candidodm.github.io/verde-vivo-paisagismo](https://candidodm.github.io/verde-vivo-paisagismo) |
 | Acompanhar Solicitação | [candidodm.github.io/verde-vivo-paisagismo/acompanhar.html](https://candidodm.github.io/verde-vivo-paisagismo/acompanhar.html) |
-| Painel Administrativo | [candidodm.github.io/verde-vivo-paisagismo/admin.html](https://candidodm.github.io/verde-vivo-paisagismo/admin.html) |
+| Minhas solicitações (cliente) | [candidodm.github.io/verde-vivo-paisagismo/minhas-solicitacoes.html](https://candidodm.github.io/verde-vivo-paisagismo/minhas-solicitacoes.html) |
+| Entrar / Criar conta | [candidodm.github.io/verde-vivo-paisagismo/login.html](https://candidodm.github.io/verde-vivo-paisagismo/login.html) |
+| Painel (equipe e administrador) | [candidodm.github.io/verde-vivo-paisagismo/admin.html](https://candidodm.github.io/verde-vivo-paisagismo/admin.html) |
 
 > Nenhuma instalação necessária — acesse diretamente pelo navegador em qualquer dispositivo.
 
@@ -40,6 +42,17 @@ O **Verde Vivo** é uma aplicação web que permite que clientes solicitem e aco
 - **Stepper visual** — Solicitado → Em Execução → Concluído
 - **Painel administrativo** — equipe filtra, visualiza e atualiza o status de cada solicitação
 
+### Versão 2 — Projeto Integrador do 5º semestre (em desenvolvimento)
+
+- [x] **Autenticação com perfis** (Firebase Authentication): cliente, equipe de campo e administrador, com login, cadastro e recuperação de senha — substitui o login fixo no código
+- [x] **Regras de segurança do Firestore** por perfil e consulta pública por protocolo sem expor dados pessoais
+- [x] Agendamento de data e período da visita técnica (segunda a sábado, até 60 dias)
+- [x] Área do cliente com histórico e linha do tempo da solicitação
+- [ ] Agenda da equipe e atribuição de responsável
+- [ ] Notificação automática por e-mail a cada mudança de status (EmailJS)
+- [ ] Painel de indicadores para o administrador
+- [ ] Avaliação do serviço pelo cliente
+
 ---
 
 ## 🛠️ Tecnologias Utilizadas
@@ -47,7 +60,8 @@ O **Verde Vivo** é uma aplicação web que permite que clientes solicitem e aco
 | Camada | Tecnologia |
 |---|---|
 | Frontend | HTML5 + CSS3 + JavaScript (Vanilla) |
-| Banco de dados | Firebase Firestore (NoSQL em nuvem) |
+| Autenticação | Firebase Authentication (e-mail e senha) |
+| Banco de dados | Firebase Firestore (NoSQL em nuvem) + regras de segurança |
 | Hospedagem | GitHub Pages |
 | Fontes | Google Fonts (Playfair Display + DM Sans) |
 
@@ -57,10 +71,21 @@ O **Verde Vivo** é uma aplicação web que permite que clientes solicitem e aco
 
 ```
 verde-vivo-paisagismo/
-├── index.html          # Página do cliente: formulário de solicitação
-├── acompanhar.html     # Página do cliente: acompanhar status
-├── admin.html          # Painel da equipe: gerenciar solicitações
-└── README.md           # Este arquivo
+├── index.html              # Cliente: formulário de solicitação (exige login)
+├── acompanhar.html         # Público: consulta de status por protocolo
+├── login.html              # Entrar, criar conta e recuperar senha
+├── minhas-solicitacoes.html # Cliente: lista dos próprios pedidos
+├── solicitacao.html        # Detalhe do pedido: visita, linha do tempo e dados
+├── admin.html              # Painel da equipe e do administrador
+├── js/
+│   ├── firebase.js         # Inicialização única do Firebase (app, auth, db)
+│   ├── sessao.js           # Sessão, perfis e proteção das páginas
+│   └── ui.js               # Funções de interface (status, datas, etapas)
+├── css/
+│   └── base.css            # Estilos compartilhados das páginas novas
+├── firestore.rules         # Regras de segurança do Firestore
+├── CONFIGURAR-FIREBASE.md  # Passo a passo de configuração no console
+└── README.md               # Este arquivo
 ```
 
 ---
@@ -92,20 +117,29 @@ cd verde-vivo-paisagismo
 ```
 Ou baixe o ZIP pelo botão **Code → Download ZIP** na página do repositório.
 
-**Passo 2 — Abra no navegador**
+**Passo 2 — Suba um servidor local**
 
-Abra o arquivo `index.html` diretamente no navegador (duplo clique ou arraste para o Chrome).
+As páginas usam módulos JavaScript (`import`), que não funcionam abrindo o arquivo com duplo clique. Na pasta do projeto, rode:
+
+```bash
+python -m http.server 8000
+```
+
+e acesse `http://localhost:8000`. (Outra opção é a extensão **Live Server** do VS Code.)
 
 ---
 
-## 🔐 Acesso ao Painel Admin
+## 🔐 Acesso ao Painel
 
-| Campo | Valor |
-|---|---|
-| Usuário | `admin` |
-| Senha | `verdevivo2026` |
+O login fixo da primeira versão foi substituído pelo **Firebase Authentication**. Cada pessoa entra com o próprio e-mail e senha, e o sistema direciona conforme o perfil:
 
-> ⚠️ Login simplificado para fins acadêmicos. Em produção, usar Firebase Authentication.
+| Perfil | Como é criado | Para onde vai após o login |
+|---|---|---|
+| Cliente | Cadastro pelo próprio site | Minhas solicitações |
+| Equipe de campo | Administrador altera o perfil para `equipe` | Painel |
+| Administrador | Perfil alterado para `admin` no console do Firebase | Painel |
+
+Veja o passo a passo em [CONFIGURAR-FIREBASE.md](CONFIGURAR-FIREBASE.md).
 
 ---
 

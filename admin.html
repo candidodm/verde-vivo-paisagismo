@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verde Vivo — Painel Administrativo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,76 +57,6 @@
       padding: 3px 10px;
       border-radius: 20px;
       letter-spacing: 0.06em;
-    }
-
-    /* ── TELA DE LOGIN ── */
-    #tela-login {
-      display: grid;
-      place-items: center;
-      height: 100vh;
-    }
-
-    .login-card {
-      background-color: var(--verde-medio);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 860px;
-      height: 500px;
-      box-shadow: 0 4px 24px rgba(26,58,42,0.1);
-      text-align: start;
-      padding: 2rem;
-    }
-
-    .login-card label {
-      color: #E1F5EE;
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-    }
-
-    @media (max-width: 575px) {
-      .login-card { 
-        padding: 0; 
-        border-radius: 0; 
-        height: 100vh;
-        box-shadow:none;
-      }
-
-      html {
-        background: var(--verde-medio);
-      }
-      
-    }
-
-    .login-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 2rem;
-      color: var(--verde-escuro);
-      margin-bottom: 0.25rem;
-    }
-
-    .login-logo span { color: var(--verde-vivo); }
-
-    .btn-login {
-      width: 100%;
-      padding: 0.8rem;
-      background: var(--verde-escuro);
-      color: var(--branco);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 500;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-login:hover { background: var(--verde-medio); }
-
-    .login-erro {
-      color: #c62828;
-      font-size: 0.85rem;
-      margin-top: 0.75rem;
-      display: none;
     }
 
     /* ── PAINEL ── */
@@ -408,75 +337,27 @@
       .painel-header, .filtros, .lista-admin { padding-left: 1rem; padding-right: 1rem; }
     }
 
-    /* Custom by Joao */
-    .title {
-      color: #E1F5EE;
-    }
-    .desc {
-      color: #9FE1CB;
-    }
+    .admin-info-agenda { font-size: 0.85rem; color: var(--verde-escuro); margin-top: 4px; font-weight: 500; }
+    .link-detalhe { margin-left: auto; font-size: 0.84rem; color: var(--verde-vivo); text-decoration: none; }
+    .link-detalhe:hover { text-decoration: underline; }
+
+    /* ── USUÁRIO LOGADO ── */
+    .usuario-box { display: flex; align-items: center; gap: 0.75rem; }
+    .usuario-nome { font-size: 0.85rem; color: var(--texto-suave); text-align: right; line-height: 1.3; }
+    .usuario-nome strong { color: var(--verde-escuro); font-weight: 500; display: block; }
+    .verificando { display: grid; place-items: center; height: 60vh; color: var(--texto-suave); font-size: 0.9rem; }
   </style>
 </head>
-<body >
-  <!-- Tela de login -->
-  <main id="tela-login" class="row">
-    <section class="login-card d-flex flex-column flex-sm-row align-items-stretch gap-0">
-      <section class="col-sm p-5 d-flex flex-column align-items-start justify-content-center gap-3 text-start" style="color: #F8C662;">
-        <div class="nav-logo h-25 fs-3" style>Verde vivo</div>
-        <div class="h-75">
-          <p class="mb-1" style="color: #5DCAA5;font-size: 0.70rem; letter-spacing: 0.1em;">AREA RESTRITA</p>
-          <h1 class="fw-semibold fs-4 mb-4 title">Painel de gestão de serviços</h1>
-          <p class="text-wrap fs-6 desc">Acesse e gerencia todas as solicitações de paisagismo, atualize estatus e acompanhe o histórico de atendimentos</p>
-        </div>
-      </section>
-      <div class="d-none d-sm-block" style="width: 1px; align-self: stretch; margin: 0 1.5rem; background: rgba(255, 255, 255, 0.35);"></div>
-      <hr class="mx-4 d-block d-sm-none" style="border-color: rgba(255, 255, 255, 0.35);">
-      <!-- Login Side -->
-      <section class="col-sm p-0" style="display: grid; place-items: center;">
-        <form onsubmit="event.preventDefault(); fazerLogin();">
-          <p class="fw-bold fs-3 mb-0 title">Entrar no painel</p>
-          <p class="desc">Use suas credenciais para acessar o sistema.</p>
-          <div class="mb-3">
-            <label for="input-usuario" class="form-label">Usuario</label>
-            <input type="text" class="form-control" id="input-usuario" aria-describedby="emailHelp">
-          </div>
-          <div class="mb-3">
-            <label for="input-senha" class="form-label">Senha</label>
-            <input type="password" class="form-control" id="input-senha">
-          </div>
-          <div class="mb-3 form-check d-flex flex-row align-items-center justify-content-between">
-            <div>
-              <input type="checkbox" class="form-check-input" id="exampleCheck1">
-              <label class="form-check-label" for="exampleCheck1">Lembrar Acesso</label>
-            </div>
-            <div>
-              <button type="submit" class="btn btn-primary">Esqueci a senha</button>
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Entrar</button>
-          <p class="login-erro" id="login-erro">Usuário ou senha incorretos.</p>
-        </form>
-      </section>
-    </section>
-  </main>
-<!--
+<body>
   <nav>
     <a class="nav-logo" href="index.html">Verde <span>Vivo</span></a>
-    <span class="nav-badge">PAINEL ADMIN</span>
+    <span class="nav-badge" id="nav-perfil">PAINEL</span>
   </nav>
 
-   
-  <div id="tela-login">
-    <div class="login-card">
-      <div class="login-logo">Verde <span>Vivo</span></div>
-      <p>Acesso restrito à equipe</p>
-      <input type="text"     id="input-usuario" placeholder="Usuário" />
-      <input type="password" id="input-senha"   placeholder="Senha" />
-      <button class="btn-login" onclick="fazerLogin()">Entrar</button>
-      <p class="login-erro" id="login-erro">Usuário ou senha incorretos.</p>
-    </div>
+  <div class="verificando" id="tela-verificando">
+    <div class="loading-dots"><span></span><span></span><span></span></div>
   </div>
--->
+
   <!-- Painel -->
   <div id="tela-painel">
     <div class="painel-header">
@@ -484,7 +365,10 @@
         <h1>Solicitações de Serviço</h1>
         <p id="contagem-solicitacoes">Carregando...</p>
       </div>
-      <button class="btn-sair" onclick="sair()">Sair</button>
+      <div class="usuario-box">
+        <div class="usuario-nome"><strong id="usuario-nome">—</strong><span id="usuario-perfil"></span></div>
+        <button class="btn-sair" onclick="sair()">Sair</button>
+      </div>
     </div>
 
     <div class="filtros">
@@ -502,59 +386,26 @@
   <div id="toast">✓ Atualizado</div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, getDocs, doc, updateDoc }
+    import { db } from "./js/firebase.js";
+    import { exigirLogin, sair, PERFIS_EQUIPE, esc } from "./js/sessao.js";
+    import { descreverAgendamento } from "./js/ui.js";
+    import { collection, query, orderBy, getDocs, doc, writeBatch, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // ── COLE AQUI SUA CONFIGURAÇÃO DO FIREBASE ────────────────────────────────
-    const firebaseConfig = {
-      apiKey: "AIzaSyDpK1BJ1aB_o9Fl0peN0qalmrvqfZaz0zc",
-      authDomain: "verde-vivo-e6afd.firebaseapp.com",
-      projectId: "verde-vivo-e6afd",
-      storageBucket: "verde-vivo-e6afd.firebasestorage.app",
-      messagingSenderId: "1045427152542",
-      appId: "1:1045427152542:web:153a3d5f38d25cecd73d8f"
-    };
-    // ─────────────────────────────────────────────────────────────────────────
+    // ── Acesso: somente perfis equipe e admin ───────────────────────────────
+    const sessao = await exigirLogin(PERFIS_EQUIPE);
+    const ROTULO_PERFIL = { admin: "Administrador", equipe: "Equipe de campo" };
+    document.getElementById('usuario-nome').textContent = sessao.perfil.nome || sessao.perfil.email;
+    document.getElementById('usuario-perfil').textContent = ROTULO_PERFIL[sessao.perfil.perfil] || '';
+    document.getElementById('nav-perfil').textContent = sessao.perfil.perfil === 'admin' ? 'PAINEL ADMIN' : 'PAINEL EQUIPE';
+    document.getElementById('tela-verificando').style.display = 'none';
+    document.getElementById('tela-painel').style.display = 'block';
+    window.sair = sair;
 
-    // ── LOGIN SIMPLES ── (para projeto acadêmico)
-    const USUARIO = 'admin';
-    const SENHA   = 'verdevivo2026';
-
-    window.fazerLogin = () => {
-      const u = document.getElementById('input-usuario').value;
-      const s = document.getElementById('input-senha').value;
-      if (u === USUARIO && s === SENHA) {
-        document.getElementById('tela-login').style.display = 'none';
-        document.getElementById('tela-painel').style.display = 'block';
-        iniciarPainel();
-      } else {
-        document.getElementById('login-erro').style.display = 'block';
-      }
-    };
-
-    // Login com Enter
-    document.getElementById('input-senha').addEventListener('keydown', e => {
-      if (e.key === 'Enter') window.fazerLogin();
-    });
-
-    window.sair = () => {
-      document.getElementById('tela-painel').style.display = 'none';
-      document.getElementById('tela-login').style.display = 'flex';
-      document.getElementById('input-usuario').value = '';
-      document.getElementById('input-senha').value = '';
-      document.getElementById('login-erro').style.display = 'none';
-    };
-
-    // ── Firebase ────────────────────────────────────────────────────────────
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
     let todasSolicitacoes = [];
     let filtroAtual = 'todos';
 
-    async function iniciarPainel() {
-      await carregarSolicitacoes();
-    }
+    carregarSolicitacoes();
 
     async function carregarSolicitacoes() {
       const lista = document.getElementById('lista-admin');
@@ -598,16 +449,17 @@
           <div class="admin-card" id="card-${d.id}">
             <div class="admin-card-top">
               <div>
-                <div class="admin-info-proto">${d.protocolo || '—'}</div>
-                <div class="admin-info-nome">${d.nome}</div>
-                <div class="admin-info-sub">${d.tipoServico} · ${d.telefone}</div>
-                <div class="admin-info-sub">${d.endereco}</div>
+                <div class="admin-info-proto">${esc(d.protocolo || '—')}</div>
+                <div class="admin-info-nome">${esc(d.nome)}</div>
+                <div class="admin-info-sub">${esc(d.tipoServico)} · ${esc(d.telefone)}${d.email ? ' · ' + esc(d.email) : ''}</div>
+                <div class="admin-info-sub">${esc(d.endereco)}</div>
+                <div class="admin-info-agenda">📅 ${esc(descreverAgendamento(d.agendamento))}${d.agendamento?.confirmado ? ' · confirmada' : d.agendamento ? ' · a confirmar' : ''}</div>
                 <div class="admin-info-sub" style="font-size:0.78rem; color:#9aaba3; margin-top:3px;">Enviado: ${data}</div>
               </div>
               <span class="badge-status ${cls}"><span class="dot"></span>${d.status}</span>
             </div>
-            <div class="admin-desc">${d.descricao}</div>
-            ${d.foto ? `<div class="admin-foto"><img src="${d.foto}" alt="Foto" /></div>` : ''}
+            <div class="admin-desc">${esc(d.descricao)}</div>
+            ${fotoSegura(d.foto) ? `<div class="admin-foto"><img src="${esc(d.foto)}" alt="Foto do local" /></div>` : ''}
             <div class="admin-acoes">
               <label>Atualizar status:</label>
               <select class="select-status" id="sel-${d.id}">
@@ -618,6 +470,7 @@
               </select>
               <button class="btn-salvar" onclick="salvarStatus('${d.id}')">Salvar</button>
               <span class="salvo-msg" id="msg-${d.id}">✓ Salvo!</span>
+              <a class="link-detalhe" href="solicitacao.html?id=${encodeURIComponent(d.id)}">Ver detalhes e histórico →</a>
             </div>
           </div>`;
       }).join('');
@@ -632,7 +485,34 @@
       btn.textContent = 'Salvando...';
 
       try {
-        await updateDoc(doc(db, 'solicitacoes', id), { status: novoStatus });
+        const atual = todasSolicitacoes.find(d => d.id === id) || {};
+        if (atual.status === novoStatus) {
+          mostrarToast('O status já é ' + novoStatus + '.');
+          return;
+        }
+        const mudancas = { status: novoStatus, atualizadoEm: serverTimestamp() };
+        if (novoStatus === 'Concluído') mudancas.concluidoEm = serverTimestamp();
+
+        // Tudo num lote: solicitação, linha do tempo e espelho público
+        const lote = writeBatch(db);
+        lote.update(doc(db, 'solicitacoes', id), mudancas);
+        lote.set(doc(collection(db, 'solicitacoes', id, 'historico')), {
+          statusAnterior: atual.status || null,
+          statusNovo: novoStatus,
+          alteradoPor: sessao.user.uid,
+          dataHora: serverTimestamp(),
+          observacao: ''
+        });
+        if (atual.protocolo) {
+          lote.set(doc(db, 'acompanhamento', atual.protocolo), {
+            protocolo: atual.protocolo,
+            status: novoStatus,
+            tipoServico: atual.tipoServico || '',
+            criadoEm: atual.criadoEm || serverTimestamp(),
+            atualizadoEm: serverTimestamp()
+          }, { merge: true });
+        }
+        await lote.commit();
 
         // Atualizar cache local
         const idx = todasSolicitacoes.findIndex(d => d.id === id);
@@ -664,6 +544,11 @@
       el.classList.add('ativo');
       renderizarFiltrado();
     };
+
+    // Aceita apenas imagens em data URL (como são gravadas pelo formulário)
+    function fotoSegura(foto) {
+      return typeof foto === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(foto);
+    }
 
     function badgeCSS(status) {
       return { 'Solicitado': 'solicitado', 'Em Execução': 'em-execucao', 'Concluído': 'concluido', 'Cancelado': 'cancelado' }[status] || 'solicitado';

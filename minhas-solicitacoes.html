@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verde Vivo — Minhas solicitações</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    .filtros { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .filtro {
+      padding: 0.38rem 0.95rem; border-radius: 20px; border: 1.5px solid var(--creme-escuro); background: var(--branco);
+      color: var(--texto-suave); font-family: inherit; font-size: 0.83rem; font-weight: 500; cursor: pointer;
+    }
+    .filtro.ativo { background: var(--verde-escuro); border-color: var(--verde-escuro); color: var(--branco); }
+    .contagem { font-size: 0.85rem; color: var(--texto-suave); margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+  <nav class="topo">
+    <a class="nav-logo" href="index.html">Verde <span>Vivo</span></a>
+    <div class="nav-direita">
+      <ul class="nav-links">
+        <li><a href="index.html">Solicitar Serviço</a></li>
+        <li><a href="minhas-solicitacoes.html" class="ativo">Minhas solicitações</a></li>
+      </ul>
+      <div class="nav-usuario" id="nav-usuario"></div>
+    </div>
+  </nav>
+
+  <header class="cabecalho">
+    <div class="cabecalho-inner">
+      <div>
+        <p class="tag">Área do cliente</p>
+        <h1 id="saudacao">Minhas solicitações</h1>
+        <p>Acompanhe o andamento e a data das visitas de cada pedido.</p>
+      </div>
+      <a class="btn btn-claro" href="index.html">+ Nova solicitação</a>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <div class="filtros" id="filtros" hidden>
+      <button class="filtro ativo" data-filtro="abertas">Em andamento</button>
+      <button class="filtro" data-filtro="Concluído">Concluídas</button>
+      <button class="filtro" data-filtro="todas">Todas</button>
+    </div>
+    <p class="contagem" id="contagem"></p>
+    <div class="lista" id="lista"></div>
+  </main>
+
+  <footer class="rodape">© 2026 Verde Vivo Paisagismo. Projeto Integrador — SENAC.</footer>
+
+  <script type="module">
+    import { db } from "./js/firebase.js";
+    import { exigirLogin, sair, PERFIS, primeiroNome, esc } from "./js/sessao.js";
+    import { badgeHTML, descreverAgendamento, formatarDataHora, paraData, LOADING } from "./js/ui.js";
+    import { collection, query, where, getDocs }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const sessao = await exigirLogin([PERFIS.CLIENTE]);
+    window.sair = sair;
+
+    const $ = id => document.getElementById(id);
+    $('nav-usuario').innerHTML = `<span>Olá, ${esc(primeiroNome(sessao.perfil))}</span><button type="button" onclick="sair()">Sair</button>`;
+    $('saudacao').textContent = `Olá, ${primeiroNome(sessao.perfil)}`;
+
+    let todas = [];
+    let filtro = 'abertas';
+
+    async function carregar() {
+      $('lista').innerHTML = LOADING;
+      try {
+        // As regras do Firestore exigem o filtro por clienteId.
+        // A ordenação é feita aqui para não precisar de índice composto.
+        const snap = await getDocs(query(collection(db, 'solicitacoes'), where('clienteId', '==', sessao.user.uid)));
+        todas = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (paraData(b.criadoEm)?.getTime() || 0) - (paraData(a.criadoEm)?.getTime() || 0));
+
+        if (!todas.length) {
+          $('lista').innerHTML = `
+            <div class="cartao estado-vazio">
+              <h2>Você ainda não fez nenhuma solicitação</h2>
+              <p>Conte o que o seu jardim precisa, envie uma foto e escolha a melhor data para a visita técnica.</p>
+              <a class="btn btn-escuro" href="index.html">Fazer minha primeira solicitação</a>
+            </div>`;
+          return;
+        }
+        // Se não houver nenhuma em andamento, abre direto em "Todas"
+        if (!todas.some(emAndamento)) filtro = 'todas';
+        $('filtros').hidden = false;
+        marcarFiltro();
+        renderizar();
+      } catch (err) {
+        console.error(err);
+        $('lista').innerHTML = `<div class="cartao estado-vazio"><p>Não foi possível carregar suas solicitações. Verifique sua conexão e tente novamente.</p></div>`;
+      }
+    }
+
+    const emAndamento = s => s.status !== 'Concluído' && s.status !== 'Cancelado';
+
+    function renderizar() {
+      const dados = filtro === 'todas' ? todas
+        : filtro === 'abertas' ? todas.filter(emAndamento)
+        : todas.filter(s => s.status === filtro);
+
+      $('contagem').textContent = `${dados.length} solicitaç${dados.length === 1 ? 'ão' : 'ões'}`;
+      if (!dados.length) {
+        $('lista').innerHTML = `<div class="cartao estado-vazio"><p>Nenhuma solicitação nesta categoria.</p></div>`;
+        return;
+      }
+      $('lista').innerHTML = dados.map(s => `
+        <a class="cartao item-solicitacao" href="solicitacao.html?id=${encodeURIComponent(s.id)}">
+          <div class="item-protocolo">${esc(s.protocolo)}</div>
+          <div class="item-titulo">${esc(s.tipoServico)}</div>
+          <div class="item-info">
+            <span>📅 ${esc(descreverAgendamento(s.agendamento))}${s.agendamento?.confirmado ? ' · confirmada' : ''}</span>
+            <span>Enviada em ${esc(formatarDataHora(s.criadoEm))}</span>
+          </div>
+          <div class="item-lado">${badgeHTML(s.status)}<span class="item-seta" aria-hidden="true">›</span></div>
+        </a>`).join('');
+    }
+
+    function marcarFiltro() {
+      document.querySelectorAll('.filtro').forEach(b => b.classList.toggle('ativo', b.dataset.filtro === filtro));
+    }
+
+    $('filtros').addEventListener('click', e => {
+      const b = e.target.closest('.filtro');
+      if (!b) return;
+      filtro = b.dataset.filtro;
+      marcarFiltro();
+      renderizar();
+    });
+
+    carregar();
+  </script>
+</body>
+</html>

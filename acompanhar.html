@@ -412,7 +412,7 @@
   <div class="hero">
     <div class="hero-tag">Acompanhamento</div>
     <h1>Veja o status do<br><em>seu serviço</em></h1>
-    <p>Busque pelo seu protocolo ou telefone.</p>
+    <p>Digite o número de protocolo que você recebeu ao enviar a solicitação.</p>
   </div>
 
   <main>
@@ -420,11 +420,11 @@
     <div class="busca-card">
       <h2>Buscar solicitação</h2>
       <div class="busca-row">
-        <input type="text" id="campo-busca" placeholder="Digite o protocolo (ex: VVABC123) ou seu telefone" />
+        <input type="text" id="campo-busca" placeholder="Protocolo (ex: VVABC123)" autocomplete="off" />
         <button class="btn-buscar" onclick="buscar()">Buscar</button>
       </div>
       <div class="ou-divisor">ou</div>
-      <button class="btn-ver-todos" onclick="carregarTodos()">Ver todas as solicitações recentes</button>
+      <a class="btn-ver-todos" href="login.html" style="display:block;text-align:center;text-decoration:none;">Entrar na minha conta para ver o histórico completo</a>
     </div>
 
     <div id="lista-solicitacoes">
@@ -432,7 +432,7 @@
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <p>Busque pelo seu protocolo ou telefone,<br>ou clique em "Ver todas" para listar as recentes.</p>
+        <p>Digite o protocolo acima para ver o andamento do serviço.</p>
       </div>
     </div>
 
@@ -441,23 +441,13 @@
   <footer>© 2026 Verde Vivo Paisagismo. Projeto Integrador — SENAC.</footer>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, query, where, orderBy, limit, getDocs }
+    import { db } from "./js/firebase.js";
+    import { esc } from "./js/sessao.js";
+    import { doc, getDoc }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // ── Configuração do Firebase ──────────────────────────────────────────────────
-    const firebaseConfig = {
-      apiKey: "AIzaSyDpK1BJ1aB_o9Fl0peN0qalmrvqfZaz0zc",
-      authDomain: "verde-vivo-e6afd.firebaseapp.com",
-      projectId: "verde-vivo-e6afd",
-      storageBucket: "verde-vivo-e6afd.firebasestorage.app",
-      messagingSenderId: "1045427152542",
-      appId: "1:1045427152542:web:153a3d5f38d25cecd73d8f"
-    };
-    // ─────────────────────────────────────────────────────────────────────────
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // A consulta pública lê apenas a coleção "acompanhamento", que guarda o
+    // status por protocolo SEM nome, telefone, endereço ou foto do cliente.
     const lista = document.getElementById('lista-solicitacoes');
 
     function mostrarLoading() {
@@ -486,86 +476,50 @@
     }
 
     function badgeCSS(status) {
-      const map = {
-        'Solicitado': 'solicitado',
-        'Em Execução': 'em-execucao',
-        'Concluído': 'concluido',
-        'Cancelado': 'cancelado'
-      };
-      return map[status] || 'solicitado';
+      return { 'Solicitado': 'solicitado', 'Em Execução': 'em-execucao', 'Concluído': 'concluido', 'Cancelado': 'cancelado' }[status] || 'solicitado';
     }
 
-    function renderCards(docs) {
-      if (docs.length === 0) {
-        lista.innerHTML = `<div class="estado-vazio"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>Nenhuma solicitação encontrada.</p></div>`;
-        return;
-      }
+    function vazio(msg) {
+      lista.innerHTML = `<div class="estado-vazio"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>${msg}</p></div>`;
+    }
 
-      lista.innerHTML = docs.map(doc => {
-        const d = doc.data();
-        const cls = badgeCSS(d.status);
-        return `
-          <div class="solicitacao-card">
-            <div class="sol-protocolo">${d.protocolo || '—'}</div>
-            <div class="badge-status ${cls}"><span class="dot"></span>${d.status}</div>
-            <div class="sol-nome">${d.nome}</div>
-            <div class="sol-servico">${d.tipoServico}</div>
-            <div class="sol-data">Enviado em: ${formatarData(d.criadoEm)}</div>
-            ${stepperHTML(d.status)}
-            <div class="sol-descricao">${d.descricao}</div>
-            ${d.foto ? `<div class="sol-foto"><img src="${d.foto}" alt="Foto do local" /></div>` : ''}
-          </div>`;
-      }).join('');
+    function renderCard(d) {
+      lista.innerHTML = `
+        <div class="solicitacao-card">
+          <div class="sol-protocolo">${esc(d.protocolo)}</div>
+          <div class="badge-status ${badgeCSS(d.status)}"><span class="dot"></span>${esc(d.status)}</div>
+          <div class="sol-servico">${esc(d.tipoServico)}</div>
+          <div class="sol-data">Enviado em: ${formatarData(d.criadoEm)}</div>
+          <div class="sol-data">Última atualização: ${formatarData(d.atualizadoEm)}</div>
+          ${d.status === 'Cancelado' ? '' : stepperHTML(d.status)}
+        </div>`;
     }
 
     window.buscar = async () => {
-      const termo = document.getElementById('campo-busca').value.trim();
+      const termo = document.getElementById('campo-busca').value.trim().toUpperCase();
       if (!termo) return;
+      if (!/^VV[A-Z0-9]{4,10}$/.test(termo)) {
+        vazio('Protocolo inválido. Ele começa com “VV”, por exemplo VVABC123.');
+        return;
+      }
       mostrarLoading();
-
       try {
-        const snapProtocolo = await getDocs(query(
-          collection(db, 'solicitacoes'),
-          where('protocolo', '==', termo.toUpperCase())
-        ));
-
-        if (!snapProtocolo.empty) {
-          renderCards(snapProtocolo.docs);
-          return;
-        }
-
-        const snapTel = await getDocs(query(
-          collection(db, 'solicitacoes'),
-          where('telefone', '==', termo)
-        ));
-
-        renderCards(snapTel.docs);
-
+        const snap = await getDoc(doc(db, 'acompanhamento', termo));
+        if (snap.exists()) renderCard(snap.data());
+        else vazio('Nenhuma solicitação encontrada com este protocolo.');
       } catch (err) {
         console.error(err);
-        lista.innerHTML = `<div class="estado-vazio"><p>Erro ao buscar. Verifique sua conexão.</p></div>`;
+        vazio('Erro ao buscar. Verifique sua conexão.');
       }
     };
 
-    window.carregarTodos = async () => {
-      mostrarLoading();
-      try {
-        const snap = await getDocs(query(
-          collection(db, 'solicitacoes'),
-          orderBy('criadoEm', 'desc'),
-          limit(20)
-        ));
-        renderCards(snap.docs);
-      } catch (err) {
-        console.error(err);
-        lista.innerHTML = `<div class="estado-vazio"><p>Erro ao carregar. Verifique sua conexão.</p></div>`;
-      }
-    };
-
-    // Busca ao pressionar Enter
     document.getElementById('campo-busca').addEventListener('keydown', e => {
       if (e.key === 'Enter') window.buscar();
     });
+
+    // Permite link direto: acompanhar.html?protocolo=VVABC123
+    const p = new URLSearchParams(location.search).get('protocolo');
+    if (p) { document.getElementById('campo-busca').value = p; window.buscar(); }
   </script>
 </body>
 </html>

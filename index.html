@@ -74,6 +74,37 @@
     nav ul a:hover, nav ul a.ativo { opacity: 1; }
     nav ul a.ativo { border-bottom: 1px solid var(--verde-claro); padding-bottom: 2px; }
 
+    .nav-direita { display: flex; align-items: center; gap: 2rem; }
+    .nav-usuario { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; color: var(--folha); }
+    .nav-usuario a, .nav-usuario button {
+      color: var(--folha); background: transparent; border: 1px solid rgba(168,213,181,0.35);
+      border-radius: 20px; padding: 4px 12px; font-family: inherit; font-size: 0.82rem;
+      text-decoration: none; cursor: pointer;
+    }
+    .nav-usuario a:hover, .nav-usuario button:hover { background: rgba(168,213,181,0.12); }
+
+    /* ── AVISO DE LOGIN ── */
+    #tela-entrar { display: none; text-align: center; padding: 1.5rem 0.5rem; }
+    #tela-entrar h2 { font-family: 'Playfair Display', serif; color: var(--verde-escuro); font-size: 1.35rem; margin-bottom: 0.5rem; }
+    #tela-entrar p { color: var(--texto-suave); font-size: 0.95rem; line-height: 1.6; max-width: 420px; margin: 0 auto 1.25rem; }
+    #tela-entrar .acoes { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    #tela-entrar .btn-primary { width: auto; padding: 0.75rem 1.5rem; margin-top: 0; text-decoration: none; }
+    #tela-form { display: none; }
+
+    /* ── PERÍODO DA VISITA ── */
+    .periodos { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .periodo-opcao { position: relative; }
+    .periodo-opcao input { position: absolute; opacity: 0; pointer-events: none; }
+    .periodo-opcao span {
+      display: block; text-align: center; padding: 0.62rem 0.5rem; border-radius: 8px;
+      border: 1px solid var(--creme-escuro); background: var(--creme); font-size: 0.9rem;
+      color: var(--texto-suave); cursor: pointer; transition: all 0.15s; text-transform: none; letter-spacing: 0;
+    }
+    .periodo-opcao input:checked + span { background: var(--verde-escuro); border-color: var(--verde-escuro); color: var(--branco); }
+    .periodo-opcao input:focus-visible + span { box-shadow: 0 0 0 3px rgba(74,140,92,0.25); }
+    .dica-campo { font-size: 0.78rem; color: #9aaba3; text-transform: none; letter-spacing: 0; font-weight: 400; }
+    #resumo-agendamento { font-weight: 500; color: var(--verde-escuro); }
+
     /* ── HERO ── */
     .hero {
       background: var(--verde-escuro);
@@ -421,20 +452,34 @@
 
   <nav>
     <a class="nav-logo" href="index.html">Verde <span>Vivo</span></a>
-    <ul>
-      <li><a href="index.html" class="ativo">Solicitar Serviço</a></li>
-      <li><a href="acompanhar.html">Acompanhar</a></li>
-    </ul>
+    <div class="nav-direita">
+      <ul>
+        <li><a href="index.html" class="ativo">Solicitar Serviço</a></li>
+        <li id="nav-minhas" hidden><a href="minhas-solicitacoes.html">Minhas solicitações</a></li>
+        <li><a href="acompanhar.html">Acompanhar</a></li>
+      </ul>
+      <div class="nav-usuario" id="nav-usuario"></div>
+    </div>
   </nav>
 
   <div class="hero">
     <div class="hero-tag">Serviços de Paisagismo</div>
     <h1>Solicite seu serviço<br><em>de forma simples</em></h1>
-    <p>Preencha o formulário abaixo. Entraremos em contato para confirmar o agendamento.</p>
+    <p>Preencha o formulário e escolha a data e o período de preferência para a visita técnica.</p>
   </div>
 
   <main>
     <div class="card">
+
+      <!-- Aviso para quem ainda não entrou -->
+      <div id="tela-entrar">
+        <h2 id="entrar-titulo">Entre para solicitar um serviço</h2>
+        <p id="entrar-texto">Com sua conta você acompanha o histórico dos pedidos e recebe um aviso por e-mail a cada mudança de status.</p>
+        <div class="acoes" id="entrar-acoes">
+          <a class="btn-primary" href="login.html?next=index.html">Entrar</a>
+          <a class="btn-secundario" style="margin-top:0" href="login.html?modo=cadastro&next=index.html">Criar conta</a>
+        </div>
+      </div>
 
       <!-- Formulário -->
       <div id="tela-form">
@@ -490,6 +535,20 @@
               <textarea id="descricao" placeholder="Descreva o serviço com o máximo de detalhes possível: tamanho da área, estado atual, o que deseja fazer..." required></textarea>
             </div>
 
+            <div class="form-group">
+              <label for="data-visita">Data preferida da visita *</label>
+              <input type="date" id="data-visita" required />
+              <span class="dica-campo">De segunda a sábado, a partir de amanhã.</span>
+            </div>
+
+            <div class="form-group">
+              <label id="rotulo-periodo">Período *</label>
+              <div class="periodos" role="radiogroup" aria-labelledby="rotulo-periodo">
+                <label class="periodo-opcao"><input type="radio" name="periodo" value="manha" /><span>Manhã · 8h–12h</span></label>
+                <label class="periodo-opcao"><input type="radio" name="periodo" value="tarde" /><span>Tarde · 13h–17h</span></label>
+              </div>
+            </div>
+
             <div class="form-group full">
               <label>Foto do local (opcional)</label>
               <div class="upload-area" id="upload-area">
@@ -527,11 +586,12 @@
           </svg>
         </div>
         <h2>Solicitação enviada!</h2>
-        <p>Recebemos seu pedido. Entraremos em contato em breve pelo WhatsApp para confirmar o agendamento.</p>
+        <p>Recebemos seu pedido. Visita solicitada para <span id="resumo-agendamento">—</span>.</p>
+        <p>A equipe vai confirmar o horário e você receberá um aviso a cada mudança de status.</p>
         <p style="margin-top:0.5rem;">Guarde seu número de protocolo:</p>
         <div id="codigo-protocolo">—</div>
         <p style="font-size:0.85rem; color:#9aaba3;">Use esse código para acompanhar o status do seu serviço.</p>
-        <a href="acompanhar.html" class="btn-secundario">Acompanhar minha solicitação →</a>
+        <a href="minhas-solicitacoes.html" class="btn-secundario" id="link-acompanhar">Acompanhar minha solicitação →</a>
         <br/>
         <button class="btn-secundario" onclick="novoFormulario()" style="margin-top:0.5rem;">Fazer nova solicitação</button>
       </div>
@@ -552,23 +612,51 @@
 
   <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp }
+    import { db } from "./js/firebase.js";
+    import { obterSessao, sair, PERFIS, primeiroNome, esc } from "./js/sessao.js";
+    import { isoDaqui, ehDomingo, descreverAgendamento } from "./js/ui.js";
+    import { collection, doc, writeBatch, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // ── Cinfiguração do firebase ──────────────────────────────
-    const firebaseConfig = {
-      apiKey: "AIzaSyDpK1BJ1aB_o9Fl0peN0qalmrvqfZaz0zc",
-      authDomain: "verde-vivo-e6afd.firebaseapp.com",
-      projectId: "verde-vivo-e6afd",
-      storageBucket: "verde-vivo-e6afd.firebasestorage.app",
-      messagingSenderId: "1045427152542",
-      appId: "1:1045427152542:web:153a3d5f38d25cecd73d8f"
-    };
-    // ──────────────────────────────────────────────────────────────────────────
+    window.sair = sair;
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // ── Sessão: quem está usando a página? ───────────────────────────────────
+    const sessao = await obterSessao();
+    const navUsuario = document.getElementById('nav-usuario');
+
+    if (!sessao) {
+      navUsuario.innerHTML = `<a href="login.html?next=index.html">Entrar</a>`;
+      document.getElementById('tela-entrar').style.display = 'block';
+    } else {
+      navUsuario.innerHTML = `<span>Olá, ${esc(primeiroNome(sessao.perfil))}</span><button type="button" onclick="sair()">Sair</button>`;
+
+      if (sessao.perfil.perfil !== PERFIS.CLIENTE) {
+        // Equipe e administrador não abrem solicitações em nome próprio
+        document.getElementById('entrar-titulo').textContent = 'Você está conectado como equipe';
+        document.getElementById('entrar-texto').textContent = 'O formulário de solicitação é usado pelos clientes. Use o painel para gerenciar os atendimentos.';
+        document.getElementById('entrar-acoes').innerHTML = `<a class="btn-primary" href="admin.html">Ir para o painel</a>`;
+        document.getElementById('tela-entrar').style.display = 'block';
+      } else {
+        // Cliente: formulário já preenchido com os dados do cadastro
+        document.getElementById('nome').value = sessao.perfil.nome || '';
+        document.getElementById('telefone').value = sessao.perfil.telefone || '';
+        document.getElementById('tela-form').style.display = 'block';
+        document.getElementById('nav-minhas').hidden = false;
+      }
+    }
+
+    // ── Data da visita: de amanhã até 60 dias, sem domingos ──────────────────
+    const campoData = document.getElementById('data-visita');
+    campoData.min = isoDaqui(1);
+    campoData.max = isoDaqui(60);
+
+    function validarAgendamento(data, periodo) {
+      if (!data) return 'Escolha a data preferida para a visita.';
+      if (data < campoData.min || data > campoData.max) return 'Escolha uma data entre amanhã e os próximos 60 dias.';
+      if (ehDomingo(data)) return 'Não atendemos aos domingos. Escolha outra data.';
+      if (!periodo) return 'Escolha o período da visita (manhã ou tarde).';
+      return null;
+    }
 
     // ── Máscara do telefone ─────────────────────────────────────────────────
     const campoTel = document.getElementById('telefone');
@@ -621,9 +709,18 @@
       const endereco   = document.getElementById('endereco').value.trim();
       const tipoServico = document.getElementById('tipo-servico').value;
       const descricao  = document.getElementById('descricao').value.trim();
+      const dataVisita = campoData.value;
+      const periodo    = document.querySelector('input[name="periodo"]:checked')?.value || '';
 
       if (!nome || !telefone || !endereco || !tipoServico || !descricao) {
         mostrarToast('Preencha todos os campos obrigatórios.', true);
+        return;
+      }
+
+      const erroAgenda = validarAgendamento(dataVisita, periodo);
+      if (erroAgenda) {
+        mostrarToast(erroAgenda, true);
+        campoData.focus();
         return;
       }
 
@@ -672,19 +769,45 @@
       const protocolo = 'VV' + Date.now().toString(36).toUpperCase().slice(-6);
 
       try {
-        await addDoc(collection(db, 'solicitacoes'), {
+        const agendamento = { data: dataVisita, periodo, confirmado: false };
+        const refSolicitacao = doc(collection(db, 'solicitacoes'));
+        const lote = writeBatch(db);
+        lote.set(refSolicitacao, {
           protocolo,
+          clienteId: sessao.user.uid,
+          email: sessao.user.email,
           nome,
           telefone,
           endereco,
           tipoServico,
           descricao,
           foto: fotoBase64,
+          agendamento,
           status: 'Solicitado',
-          criadoEm: serverTimestamp()
+          criadoEm: serverTimestamp(),
+          atualizadoEm: serverTimestamp()
         });
+        // Primeiro registro da linha do tempo
+        lote.set(doc(collection(db, 'solicitacoes', refSolicitacao.id, 'historico')), {
+          statusAnterior: null,
+          statusNovo: 'Solicitado',
+          alteradoPor: sessao.user.uid,
+          dataHora: serverTimestamp(),
+          observacao: 'Solicitação enviada pelo cliente'
+        });
+        // Espelho público (sem dados pessoais) para a consulta por protocolo
+        lote.set(doc(db, 'acompanhamento', protocolo), {
+          protocolo,
+          status: 'Solicitado',
+          tipoServico,
+          criadoEm: serverTimestamp(),
+          atualizadoEm: serverTimestamp()
+        });
+        await lote.commit();
 
         document.getElementById('codigo-protocolo').textContent = protocolo;
+        document.getElementById('link-acompanhar').href = `solicitacao.html?id=${refSolicitacao.id}`;
+        document.getElementById('resumo-agendamento').textContent = descreverAgendamento(agendamento, { longo: true });
         document.getElementById('tela-form').style.display = 'none';
         document.getElementById('tela-sucesso').style.display = 'block';
 
@@ -717,6 +840,8 @@
       document.getElementById('tela-sucesso').style.display = 'none';
       document.getElementById('tela-form').style.display = 'block';
       document.getElementById('form-solicitacao').reset();
+      document.getElementById('nome').value = sessao.perfil.nome || '';
+      document.getElementById('telefone').value = sessao.perfil.telefone || '';
       preview.style.display = 'none';
       document.getElementById('btn-enviar').disabled = false;
       document.getElementById('spinner').style.display = 'none';

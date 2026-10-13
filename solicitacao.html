@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verde Vivo — Detalhe da solicitação</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    .detalhe { display: grid; gap: 1rem; }
+    .topo-detalhe { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem; }
+    .protocolo { font-family: monospace; font-size: 0.82rem; color: #9aaba3; letter-spacing: 0.06em; }
+    .titulo { font-family: 'Playfair Display', serif; color: var(--verde-escuro); font-size: 1.35rem; font-weight: 600; }
+    h2.secao { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texto-suave); font-weight: 500; margin-bottom: 0.75rem; }
+
+    .visita { display: flex; gap: 1rem; align-items: center; }
+    .visita-icone {
+      width: 52px; height: 52px; border-radius: 12px; background: var(--creme); flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;
+      border: 1px solid var(--creme-escuro);
+    }
+    .visita-icone .dia { font-size: 1.25rem; font-weight: 600; color: var(--verde-escuro); }
+    .visita-icone .mes { font-size: 0.68rem; text-transform: uppercase; color: var(--texto-suave); margin-top: 2px; }
+    .visita-texto strong { display: block; color: var(--verde-escuro); font-weight: 500; }
+    .visita-texto span { font-size: 0.88rem; color: var(--texto-suave); }
+    .selo { display: inline-block; margin-top: 4px; font-size: 0.75rem; padding: 2px 9px; border-radius: 12px; }
+    .selo.pendente { background: #fff8e1; color: #8b6914; }
+    .selo.confirmada { background: #e8f5e9; color: #1b5e20; }
+
+    dl.dados { display: grid; grid-template-columns: max-content 1fr; gap: 0.5rem 1rem; font-size: 0.92rem; }
+    dl.dados dt { color: var(--texto-suave); }
+    dl.dados dd { color: var(--texto); word-break: break-word; }
+    .descricao { margin-top: 0.85rem; padding: 0.85rem; background: var(--creme); border-radius: 8px; font-size: 0.92rem; line-height: 1.55; color: var(--texto-suave); white-space: pre-wrap; }
+    .foto { margin-top: 0.85rem; }
+    .foto img { max-width: 100%; max-height: 260px; border-radius: 10px; object-fit: cover; }
+
+    @media (max-width: 600px) {
+      dl.dados { grid-template-columns: 1fr; gap: 0.1rem; }
+      dl.dados dd { margin-bottom: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topo">
+    <a class="nav-logo" href="index.html">Verde <span>Vivo</span></a>
+    <div class="nav-direita">
+      <ul class="nav-links" id="nav-links"></ul>
+      <div class="nav-usuario" id="nav-usuario"></div>
+    </div>
+  </nav>
+
+  <main class="conteudo">
+    <a class="link-voltar" id="voltar" href="minhas-solicitacoes.html">← Minhas solicitações</a>
+    <div id="area"></div>
+  </main>
+
+  <footer class="rodape">© 2026 Verde Vivo Paisagismo. Projeto Integrador — SENAC.</footer>
+
+  <script type="module">
+    import { db } from "./js/firebase.js";
+    import { exigirLogin, sair, PERFIS, PERFIS_EQUIPE, primeiroNome, esc } from "./js/sessao.js";
+    import { badgeHTML, stepperHTML, formatarDataHora, PERIODOS, LOADING } from "./js/ui.js";
+    import { doc, getDoc, collection, query, orderBy, getDocs }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const sessao = await exigirLogin([PERFIS.CLIENTE, ...PERFIS_EQUIPE]);
+    window.sair = sair;
+    const $ = id => document.getElementById(id);
+    const ehCliente = sessao.perfil.perfil === PERFIS.CLIENTE;
+
+    $('nav-usuario').innerHTML = `<span>Olá, ${esc(primeiroNome(sessao.perfil))}</span><button type="button" onclick="sair()">Sair</button>`;
+    $('nav-links').innerHTML = ehCliente
+      ? `<li><a href="index.html">Solicitar Serviço</a></li><li><a href="minhas-solicitacoes.html" class="ativo">Minhas solicitações</a></li>`
+      : `<li><a href="admin.html">Painel</a></li>`;
+    if (!ehCliente) { $('voltar').href = 'admin.html'; $('voltar').textContent = '← Voltar ao painel'; }
+
+    const id = new URLSearchParams(location.search).get('id');
+    const area = $('area');
+
+    function naoEncontrada() {
+      area.innerHTML = `
+        <div class="cartao estado-vazio">
+          <h2>Solicitação não encontrada</h2>
+          <p>Ela pode ter sido removida ou pertencer a outra conta.</p>
+          <a class="btn btn-escuro" href="${ehCliente ? 'minhas-solicitacoes.html' : 'admin.html'}">Voltar</a>
+        </div>`;
+    }
+
+    function blocoVisita(ag) {
+      if (!ag || !ag.data) {
+        return `<div class="visita"><div class="visita-texto"><strong>Data a combinar</strong><span>A equipe vai entrar em contato para agendar.</span></div></div>`;
+      }
+      const [a, m, d] = ag.data.split('-').map(Number);
+      const data = new Date(a, m - 1, d);
+      const mes = data.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+      const dataLongaMin = data.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      const dataLonga = dataLongaMin.charAt(0).toUpperCase() + dataLongaMin.slice(1);
+      return `
+        <div class="visita">
+          <div class="visita-icone"><span class="dia">${String(d).padStart(2, '0')}</span><span class="mes">${esc(mes)}</span></div>
+          <div class="visita-texto">
+            <strong>${esc(dataLonga)}</strong>
+            <span>${esc(PERIODOS[ag.periodo] || ag.periodo || '')}</span><br>
+            <span class="selo ${ag.confirmado ? 'confirmada' : 'pendente'}">${ag.confirmado ? 'Visita confirmada pela equipe' : 'Aguardando confirmação da equipe'}</span>
+          </div>
+        </div>`;
+    }
+
+    function blocoHistorico(itens, s) {
+      // Solicitações antigas não têm histórico: mostra ao menos a criação.
+      if (!itens.length) itens = [{ statusNovo: 'Solicitado', dataHora: s.criadoEm, observacao: 'Solicitação enviada' }];
+      return `<ul class="timeline">${itens.map((h, i) => `
+        <li class="${i === itens.length - 1 ? 'atual' : ''}">
+          <div class="t-titulo">${esc(h.statusNovo)}</div>
+          <div class="t-data">${esc(formatarDataHora(h.dataHora))}${h.observacao ? ' · ' + esc(h.observacao) : ''}</div>
+        </li>`).join('')}</ul>`;
+    }
+
+    const fotoSegura = f => typeof f === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(f);
+
+    async function carregar() {
+      if (!id) return naoEncontrada();
+      area.innerHTML = LOADING;
+      try {
+        const snap = await getDoc(doc(db, 'solicitacoes', id));
+        if (!snap.exists()) return naoEncontrada();
+        const s = snap.data();
+        if (ehCliente && s.clienteId !== sessao.user.uid) return naoEncontrada();
+
+        let historico = [];
+        try {
+          const h = await getDocs(query(collection(db, 'solicitacoes', id, 'historico'), orderBy('dataHora', 'asc')));
+          historico = h.docs.map(d => d.data());
+        } catch (e) { console.warn('Histórico indisponível', e); }
+
+        document.title = `Verde Vivo — ${s.protocolo || 'Solicitação'}`;
+        area.innerHTML = `
+          <div class="detalhe">
+            <section class="cartao">
+              <div class="topo-detalhe">
+                <div>
+                  <div class="protocolo">${esc(s.protocolo)}</div>
+                  <div class="titulo">${esc(s.tipoServico)}</div>
+                </div>
+                ${badgeHTML(s.status)}
+              </div>
+              ${stepperHTML(s.status)}
+            </section>
+
+            <section class="cartao">
+              <h2 class="secao">Visita técnica</h2>
+              ${blocoVisita(s.agendamento)}
+            </section>
+
+            <section class="cartao">
+              <h2 class="secao">Linha do tempo</h2>
+              ${blocoHistorico(historico, s)}
+            </section>
+
+            <section class="cartao">
+              <h2 class="secao">Dados da solicitação</h2>
+              <dl class="dados">
+                <dt>Endereço</dt><dd>${esc(s.endereco)}</dd>
+                <dt>Contato</dt><dd>${esc(s.nome)} · ${esc(s.telefone)}</dd>
+                <dt>Enviada em</dt><dd>${esc(formatarDataHora(s.criadoEm))}</dd>
+              </dl>
+              <div class="descricao">${esc(s.descricao)}</div>
+              ${fotoSegura(s.foto) ? `<div class="foto"><img src="${esc(s.foto)}" alt="Foto do local enviada pelo cliente" /></div>` : ''}
+            </section>
+          </div>`;
+      } catch (err) {
+        console.error(err);
+        if (err?.code === 'permission-denied') return naoEncontrada();
+        area.innerHTML = `<div class="cartao estado-vazio"><p>Não foi possível carregar a solicitação. Verifique sua conexão e tente novamente.</p></div>`;
+      }
+    }
+
+    carregar();
+  </script>
+</body>
+</html>

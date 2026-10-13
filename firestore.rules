@@ -1,0 +1,106 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Verde Vivo — regras de segurança do Cloud Firestore
+// Publicar em: Console do Firebase → Firestore Database → Regras → Publicar
+//
+// Perfis (campo "perfil" em usuarios/{uid}): cliente | equipe | admin
+// ─────────────────────────────────────────────────────────────────────────────
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Funções auxiliares ──────────────────────────────────────────────────
+    function logado() {
+      return request.auth != null;
+    }
+
+    function meuPerfil() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
+    }
+
+    function temPerfil(perfis) {
+      return logado()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && meuPerfil().perfil in perfis
+        && meuPerfil().ativo == true;
+    }
+
+    function ehEquipe() { return temPerfil(['equipe', 'admin']); }
+    function ehAdmin()  { return temPerfil(['admin']); }
+
+    // ── Usuários ────────────────────────────────────────────────────────────
+    match /usuarios/{uid} {
+      // Cada um lê o próprio perfil; equipe e admin leem todos.
+      allow read: if logado() && (request.auth.uid == uid || ehEquipe());
+
+      // Autocadastro: sempre como cliente ativo, nunca como equipe/admin.
+      allow create: if logado() && request.auth.uid == uid
+        && request.resource.data.perfil == 'cliente'
+        && request.resource.data.ativo == true;
+
+      // O próprio usuário edita nome/telefone, mas não muda perfil nem "ativo".
+      // O admin pode alterar tudo (promover para equipe, desativar etc.).
+      allow update: if ehAdmin()
+        || (logado() && request.auth.uid == uid
+            && request.resource.data.perfil == resource.data.perfil
+            && request.resource.data.ativo == resource.data.ativo);
+
+      allow delete: if ehAdmin();
+    }
+
+    // ── Solicitações (dados completos, com dados pessoais) ──────────────────
+    match /solicitacoes/{id} {
+      // Cliente cria apenas em nome próprio e sempre com status inicial.
+      allow create: if logado()
+        && request.resource.data.clienteId == request.auth.uid
+        && request.resource.data.status == 'Solicitado';
+
+      // Cliente lê só as próprias; equipe e admin leem todas.
+      // (Consultas do cliente precisam filtrar por clienteId == uid.)
+      allow read: if ehEquipe()
+        || (logado() && resource.data.clienteId == request.auth.uid);
+
+      allow update: if ehEquipe();
+      allow delete: if ehAdmin();
+
+      // ── Linha do tempo: uma entrada por mudança de status ─────────────────
+      // Ninguém edita ou apaga entradas: o histórico só cresce.
+      match /historico/{entrada} {
+        allow read: if ehEquipe()
+          || (logado() && get(/databases/$(database)/documents/solicitacoes/$(id)).data.clienteId == request.auth.uid);
+
+        // Equipe registra mudanças. O cliente só registra a entrada inicial,
+        // no mesmo lote em que cria a solicitação (por isso getAfter).
+        allow create: if ehEquipe()
+          || (logado()
+              && request.resource.data.statusNovo == 'Solicitado'
+              && request.resource.data.alteradoPor == request.auth.uid
+              && getAfter(/databases/$(database)/documents/solicitacoes/$(id)).data.clienteId == request.auth.uid);
+
+        allow update, delete: if false;
+      }
+    }
+
+    // ── Acompanhamento público por protocolo (sem dados pessoais) ───────────
+    match /acompanhamento/{protocolo} {
+      // Qualquer pessoa consulta UM protocolo que já conhece; listar é proibido.
+      allow get: if true;
+      allow list: if false;
+
+      // Criado pelo cliente junto com a solicitação; a equipe também pode criar
+      // (ex.: solicitações antigas, anteriores a esta coleção, ao mudar o status).
+      allow create: if ehEquipe()
+        || (logado()
+            && request.resource.data.protocolo == protocolo
+            && request.resource.data.status == 'Solicitado');
+
+      allow update: if ehEquipe();
+      allow delete: if ehAdmin();
+    }
+
+    // Qualquer outra coleção fica bloqueada por padrão.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
