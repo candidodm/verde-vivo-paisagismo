@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verde Vivo — Usuários</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    main.conteudo { max-width: 900px; }
+    .cabecalho-inner { max-width: 900px; }
+    h2.secao { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texto-suave); font-weight: 500; margin-bottom: 0.75rem; }
+    .form-novo { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr 0.8fr auto; gap: 0.6rem; align-items: end; }
+    .campo label { display: block; font-size: 0.75rem; color: var(--texto-suave); margin-bottom: 0.3rem; font-weight: 500; }
+    input, select {
+      width: 100%; font-family: inherit; font-size: 0.92rem; color: var(--texto); background: var(--creme);
+      border: 1px solid var(--creme-escuro); border-radius: 8px; padding: 0.6rem 0.7rem; outline: none;
+    }
+    input:focus, select:focus { border-color: var(--verde-vivo); background: var(--branco); }
+    .dica { font-size: 0.8rem; color: var(--texto-claro); margin-top: 0.6rem; }
+    .msg { font-size: 0.86rem; margin-top: 0.7rem; padding: 0.6rem 0.8rem; border-radius: 8px; display: none; }
+    .msg.ok { display: block; background: #e8f5e9; color: #1b5e20; }
+    .msg.erro { display: block; background: #fdecec; color: var(--erro); }
+
+    .barra { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1.5rem 0 0.9rem; align-items: center; }
+    .chip {
+      padding: 0.4rem 0.9rem; border-radius: 20px; border: 1.5px solid var(--creme-escuro); background: var(--branco);
+      color: var(--texto-suave); font-family: inherit; font-size: 0.84rem; font-weight: 500; cursor: pointer;
+    }
+    .chip.ativo { background: var(--verde-escuro); border-color: var(--verde-escuro); color: var(--branco); }
+    .barra input { max-width: 260px; margin-left: auto; border-radius: 20px; background: var(--branco); }
+
+    .usuario { display: grid; grid-template-columns: 1fr 9.5rem 7.5rem auto; gap: 0.75rem; align-items: center; margin-bottom: 0.6rem; }
+    .u-nome { font-weight: 500; color: var(--verde-escuro); }
+    .u-info { font-size: 0.82rem; color: var(--texto-suave); word-break: break-word; }
+    .u-voce { font-size: 0.72rem; background: var(--creme); color: var(--texto-suave); border-radius: 10px; padding: 1px 8px; margin-left: 4px; }
+    .usuario.inativo { opacity: 0.6; }
+    .usuario .btn { padding: 0.5rem 0.9rem; font-size: 0.85rem; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    @media (max-width: 760px) {
+      .form-novo { grid-template-columns: 1fr 1fr; }
+      .form-novo .btn { grid-column: 1 / -1; }
+      .usuario { grid-template-columns: 1fr 1fr; }
+      .usuario > div:first-child { grid-column: 1 / -1; }
+      .usuario .btn { grid-column: 1 / -1; }
+      .barra input { max-width: none; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topo">
+    <a class="nav-logo" href="admin.html">Verde <span>Vivo</span></a>
+    <div class="nav-direita">
+      <ul class="nav-links" id="nav-links"></ul>
+      <div class="nav-usuario" id="nav-usuario"></div>
+    </div>
+  </nav>
+
+  <header class="cabecalho">
+    <div class="cabecalho-inner">
+      <div>
+        <p class="tag">Administrador</p>
+        <h1>Usuários e equipe</h1>
+        <p>Cadastre a equipe de campo, altere perfis e bloqueie acessos.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <section class="cartao">
+      <h2 class="secao">Cadastrar membro da equipe</h2>
+      <form id="form-novo" class="form-novo" novalidate>
+        <div class="campo"><label for="novo-nome">Nome</label><input id="novo-nome" autocomplete="off" required /></div>
+        <div class="campo"><label for="novo-email">E-mail</label><input id="novo-email" type="email" autocomplete="off" required /></div>
+        <div class="campo"><label for="novo-telefone">Telefone</label><input id="novo-telefone" inputmode="numeric" maxlength="15" placeholder="(81) 99999-9999" /></div>
+        <div class="campo"><label for="novo-perfil">Perfil</label>
+          <select id="novo-perfil"><option value="equipe">Equipe</option><option value="admin">Admin</option></select>
+        </div>
+        <button class="btn btn-escuro" id="btn-cadastrar" type="submit">Cadastrar</button>
+      </form>
+      <p class="dica">A pessoa recebe um e-mail para criar a própria senha. Clientes não precisam ser cadastrados aqui — eles criam a conta pelo site.</p>
+      <div class="msg" id="msg-novo" role="status"></div>
+    </section>
+
+    <div class="barra" id="filtros">
+      <button class="chip ativo" data-filtro="equipe">Equipe</button>
+      <button class="chip" data-filtro="cliente">Clientes</button>
+      <button class="chip" data-filtro="todos">Todos</button>
+      <input type="search" id="busca" placeholder="Buscar por nome ou e-mail" aria-label="Buscar usuário" />
+    </div>
+    <div id="lista"></div>
+  </main>
+
+  <footer class="rodape">© 2026 Verde Vivo Paisagismo. Projeto Integrador — SENAC.</footer>
+
+  <script type="module">
+    import { db, auth, firebaseConfig } from "./js/firebase.js";
+    import { exigirLogin, sair, PERFIS, primeiroNome, esc } from "./js/sessao.js";
+    import { navEquipeHTML, formatarDataHora, mostrarToast, LOADING } from "./js/ui.js";
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail, signOut }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const sessao = await exigirLogin([PERFIS.ADMIN]);
+    window.sair = sair;
+    const $ = id => document.getElementById(id);
+    $('nav-links').innerHTML = navEquipeHTML(sessao.perfil.perfil, 'usuarios.html');
+    $('nav-usuario').innerHTML = `<span>${esc(primeiroNome(sessao.perfil))}</span><button type="button" onclick="sair()">Sair</button>`;
+
+    let usuarios = [], filtro = 'equipe', termo = '';
+
+    // ── Lista ───────────────────────────────────────────────────────────────
+    async function carregar() {
+      $('lista').innerHTML = LOADING;
+      try {
+        const snap = await getDocs(collection(db, 'usuarios'));
+        usuarios = snap.docs.map(d => ({ uid: d.id, ...d.data() }))
+          .sort((a, b) => (a.nome || a.email || '').localeCompare(b.nome || b.email || ''));
+        renderizar();
+      } catch (err) {
+        console.error(err);
+        $('lista').innerHTML = `<div class="cartao estado-vazio"><p>Não foi possível carregar os usuários.</p></div>`;
+      }
+    }
+
+    function renderizar() {
+      let lista = usuarios;
+      if (filtro === 'equipe') lista = lista.filter(u => u.perfil === 'equipe' || u.perfil === 'admin');
+      if (filtro === 'cliente') lista = lista.filter(u => u.perfil === 'cliente');
+      if (termo) lista = lista.filter(u => `${u.nome} ${u.email}`.toLowerCase().includes(termo));
+      if (!lista.length) { $('lista').innerHTML = `<div class="cartao estado-vazio"><p>Nenhum usuário encontrado.</p></div>`; return; }
+
+      $('lista').innerHTML = lista.map(u => {
+        const voce = u.uid === sessao.user.uid;
+        return `
+          <div class="cartao usuario ${u.ativo === false ? 'inativo' : ''}" data-uid="${esc(u.uid)}">
+            <div>
+              <div class="u-nome">${esc(u.nome || '(sem nome)')}${voce ? '<span class="u-voce">você</span>' : ''}</div>
+              <div class="u-info">${esc(u.email)}${u.telefone ? ' · ' + esc(u.telefone) : ''}</div>
+              <div class="u-info">Desde ${esc(formatarDataHora(u.criadoEm))}</div>
+            </div>
+            <select class="sel-perfil" aria-label="Perfil" ${voce ? 'disabled title="Você não pode alterar o próprio perfil"' : ''}>
+              ${['cliente', 'equipe', 'admin'].map(p => `<option value="${p}" ${u.perfil === p ? 'selected' : ''}>${{ cliente: 'Cliente', equipe: 'Equipe', admin: 'Admin' }[p]}</option>`).join('')}
+            </select>
+            <select class="sel-ativo" aria-label="Situação" ${voce ? 'disabled' : ''}>
+              <option value="true" ${u.ativo !== false ? 'selected' : ''}>Ativo</option>
+              <option value="false" ${u.ativo === false ? 'selected' : ''}>Bloqueado</option>
+            </select>
+            <button class="btn btn-contorno btn-salvar" ${voce ? 'disabled' : ''}>Salvar</button>
+          </div>`;
+      }).join('');
+    }
+
+    $('lista').addEventListener('click', async e => {
+      const btn = e.target.closest('.btn-salvar'); if (!btn) return;
+      const card = btn.closest('.usuario');
+      const uid = card.dataset.uid;
+      if (uid === sessao.user.uid) return;
+      const u = usuarios.find(x => x.uid === uid);
+      const perfil = card.querySelector('.sel-perfil').value;
+      const ativo = card.querySelector('.sel-ativo').value === 'true';
+      if (perfil === u.perfil && ativo === (u.ativo !== false)) return mostrarToast('Nada para salvar.');
+      btn.disabled = true; btn.textContent = 'Salvando...';
+      try {
+        await updateDoc(doc(db, 'usuarios', uid), { perfil, ativo, atualizadoEm: serverTimestamp() });
+        Object.assign(u, { perfil, ativo });
+        mostrarToast('Usuário atualizado.');
+        renderizar();
+      } catch (err) {
+        console.error(err);
+        mostrarToast('Não foi possível salvar.', true);
+        btn.disabled = false; btn.textContent = 'Salvar';
+      }
+    });
+
+    $('filtros').addEventListener('click', e => {
+      const b = e.target.closest('.chip'); if (!b) return;
+      filtro = b.dataset.filtro;
+      document.querySelectorAll('#filtros .chip').forEach(c => c.classList.toggle('ativo', c === b));
+      renderizar();
+    });
+    $('busca').addEventListener('input', e => { termo = e.target.value.trim().toLowerCase(); renderizar(); });
+
+    // ── Cadastro de membro ────────────────────────────────────────────────────
+    // Criar uma conta pelo SDK do navegador faria login com ela e derrubaria a
+    // sessão do admin. Por isso o cadastro usa uma SEGUNDA instância do Firebase,
+    // que cria a conta, grava o perfil básico e sai — sem afetar esta sessão.
+    function appCadastro() {
+      return getApps().find(a => a.name === 'cadastro-equipe') || initializeApp(firebaseConfig, 'cadastro-equipe');
+    }
+    function senhaTemporaria() {
+      const bytes = crypto.getRandomValues(new Uint8Array(18));
+      return Array.from(bytes, b => 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#'[b % 57]).join('');
+    }
+    const msg = (texto, tipo) => { $('msg-novo').textContent = texto; $('msg-novo').className = `msg ${tipo}`; };
+
+    const campoTel = $('novo-telefone');
+    campoTel.addEventListener('input', () => {
+      let v = campoTel.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length <= 2) v = v.replace(/^(\d{0,2})/, '($1');
+      else if (v.length <= 6) v = v.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+      else if (v.length <= 10) v = v.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+      else v = v.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+      campoTel.value = v;
+    });
+
+    $('form-novo').addEventListener('submit', async e => {
+      e.preventDefault();
+      const nome = $('novo-nome').value.trim();
+      const email = $('novo-email').value.trim().toLowerCase();
+      const telefone = $('novo-telefone').value.trim();
+      const perfil = $('novo-perfil').value;
+      if (!nome || !email) return msg('Informe nome e e-mail.', 'erro');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return msg('E-mail inválido.', 'erro');
+
+      const btn = $('btn-cadastrar');
+      btn.disabled = true; btn.textContent = 'Cadastrando...';
+      const app2 = appCadastro();
+      const auth2 = getAuth(app2);
+      try {
+        const { user } = await createUserWithEmailAndPassword(auth2, email, senhaTemporaria());
+        await updateProfile(user, { displayName: nome });
+        // O próprio usuário novo grava seu perfil básico (as regras só permitem "cliente")...
+        await setDoc(doc(getFirestore(app2), 'usuarios', user.uid), {
+          nome, email, telefone, perfil: 'cliente', ativo: true, criadoEm: serverTimestamp(), criadoPor: sessao.user.uid
+        });
+        await signOut(auth2);
+        // ...e o admin, com a sessão dele, promove ao perfil escolhido.
+        await updateDoc(doc(db, 'usuarios', user.uid), { perfil, atualizadoEm: serverTimestamp() });
+        let aviso = '';
+        try { await sendPasswordResetEmail(auth, email); aviso = ` Enviamos para ${email} um link para criar a senha.`; }
+        catch (err2) { console.warn(err2); aviso = ' Não foi possível enviar o e-mail de senha: peça para a pessoa usar “Esqueci minha senha” na tela de login.'; }
+        msg(`${nome} foi cadastrado(a) como ${perfil === 'admin' ? 'administrador(a)' : 'equipe'}.${aviso}`, 'ok');
+        $('form-novo').reset();
+        carregar();
+      } catch (err) {
+        console.error(err);
+        try { await signOut(auth2); } catch {}
+        const erros = {
+          'auth/email-already-in-use': 'Já existe uma conta com este e-mail. Procure a pessoa na aba “Clientes” e mude o perfil dela para Equipe.',
+          'auth/invalid-email': 'E-mail inválido.',
+          'auth/network-request-failed': 'Sem conexão com a internet.'
+        };
+        msg(erros[err?.code] || 'Não foi possível cadastrar. Tente novamente.', 'erro');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Cadastrar';
+      }
+    });
+
+    carregar();
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Configuração do Firebase
 
-> **Sempre que o arquivo `firestore.rules` mudar**, repita o passo 2 (colar e publicar as regras). A etapa 2 acrescentou as regras da linha do tempo (`historico`).
+> **Sempre que o arquivo `firestore.rules` mudar**, repita o passo 2 (colar e publicar as regras). A etapa 2 acrescentou as regras da linha do tempo (`historico`); a etapa 3 restringiu a equipe às visitas atribuídas a ela; a etapa 4 acrescentou as avaliações (`avaliacoes`).
 
 Estes passos são feitos **uma única vez** no [Console do Firebase](https://console.firebase.google.com/), no projeto `verde-vivo-e6afd`, por quem tem acesso de proprietário ou editor.
 
@@ -28,17 +28,39 @@ O cadastro pelo site sempre cria contas com perfil **cliente** (as regras impede
 3. Edite o campo `perfil`, troque `cliente` por `admin` e salve.
 4. Saia e entre de novo no site: você será levado ao painel.
 
-Para criar um usuário da **equipe de campo**, faça o mesmo processo trocando para `equipe`. (Na etapa 4 o administrador poderá fazer isso pelo próprio painel, na tela "Usuários da equipe".)
+Depois disso, **membros da equipe e outros administradores são cadastrados pelo próprio site**, na tela **Equipe** (`usuarios.html`): a pessoa recebe um e-mail para criar a senha. Na mesma tela o admin muda perfis e bloqueia acessos.
 
-Para **bloquear** o acesso de alguém, mude o campo `ativo` para `false`.
+## 4. Notificações por e-mail (EmailJS)
 
-## Estrutura de dados criada nesta etapa
+1. Crie uma conta gratuita em [emailjs.com](https://www.emailjs.com/) (200 e-mails/mês).
+2. **Email Services → Add New Service → Gmail**: conecte o Gmail remetente e anote o **Service ID**.
+3. **Email Templates → Create New Template**: Subject `{{assunto}}`, To Email `{{to_email}}`, From Name `Verde Vivo Paisagismo` e o corpo:
+   ```
+   Olá, {{to_name}}!
+
+   {{mensagem}}
+
+   Protocolo: {{protocolo}}
+   Status atual: {{status}}
+
+   Acompanhe sua solicitação: {{link}}
+
+   Verde Vivo Paisagismo
+   ```
+   Salve e anote o **Template ID**.
+4. **Account → General**: anote a **Public Key**.
+5. No arquivo [`js/notificacoes.js`](js/notificacoes.js), substitua os três textos `COLE_AQUI_...` pelos códigos anotados e envie o arquivo para o GitHub.
+
+Enquanto as chaves não forem preenchidas, o sistema funciona normalmente — só não envia e-mails.
+
+## Estrutura de dados
 
 | Coleção | Conteúdo | Quem acessa |
 |---|---|---|
 | `usuarios/{uid}` | nome, e-mail, telefone, perfil (`cliente`, `equipe` ou `admin`), ativo, criadoEm | o próprio usuário; equipe e admin leem todos |
-| `solicitacoes/{id}` | dados completos do pedido + `clienteId`, `email`, `agendamento` (data, período, confirmado), `atualizadoEm`, `concluidoEm` | o cliente dono do pedido; equipe e admin |
-| `solicitacoes/{id}/historico/{entrada}` | statusAnterior, statusNovo, alteradoPor, dataHora, observacao — uma entrada por mudança de status; ninguém edita nem apaga | o cliente dono do pedido; equipe e admin |
+| `solicitacoes/{id}` | dados completos do pedido + `clienteId`, `email`, `agendamento` (data, período, confirmado), `responsavelId`, `responsavelNome`, `atualizadoEm`, `iniciadoEm`, `concluidoEm` | o cliente dono do pedido; o membro da equipe responsável; o admin |
+| `solicitacoes/{id}/historico/{entrada}` | tipo (status, agenda, atribuição), titulo, statusAnterior, statusNovo, alteradoPor, alteradoPorNome, dataHora, observacao, notificado | o cliente dono do pedido; o responsável; o admin. Só o campo `notificado` pode ser alterado depois |
+| `avaliacoes/{solicitacaoId}` | solicitacaoId, clienteId, nota (1 a 5), comentario, tipoServico, responsavelId, responsavelNome, criadoEm | o cliente que avaliou; o responsável; o admin. Só o cliente dono cria, só após "Concluído", e não pode editar depois |
 | `acompanhamento/{protocolo}` | protocolo, status, tipo de serviço e datas — **sem dados pessoais** | qualquer pessoa que saiba o protocolo (só leitura de um item; listar é proibido) |
 
 ### Sobre as solicitações antigas (de teste)

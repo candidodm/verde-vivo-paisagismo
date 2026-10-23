@@ -12,8 +12,11 @@ Sistema web de solicitação e acompanhamento de serviços de paisagismo.
 | Formulário de Solicitação | [candidodm.github.io/verde-vivo-paisagismo](https://candidodm.github.io/verde-vivo-paisagismo) |
 | Acompanhar Solicitação | [candidodm.github.io/verde-vivo-paisagismo/acompanhar.html](https://candidodm.github.io/verde-vivo-paisagismo/acompanhar.html) |
 | Minhas solicitações (cliente) | [candidodm.github.io/verde-vivo-paisagismo/minhas-solicitacoes.html](https://candidodm.github.io/verde-vivo-paisagismo/minhas-solicitacoes.html) |
+| Indicadores (administrador) | [candidodm.github.io/verde-vivo-paisagismo/indicadores.html](https://candidodm.github.io/verde-vivo-paisagismo/indicadores.html) |
+| Usuários e equipe (administrador) | [candidodm.github.io/verde-vivo-paisagismo/usuarios.html](https://candidodm.github.io/verde-vivo-paisagismo/usuarios.html) |
 | Entrar / Criar conta | [candidodm.github.io/verde-vivo-paisagismo/login.html](https://candidodm.github.io/verde-vivo-paisagismo/login.html) |
-| Painel (equipe e administrador) | [candidodm.github.io/verde-vivo-paisagismo/admin.html](https://candidodm.github.io/verde-vivo-paisagismo/admin.html) |
+| Agenda (equipe e administrador) | [candidodm.github.io/verde-vivo-paisagismo/agenda.html](https://candidodm.github.io/verde-vivo-paisagismo/agenda.html) |
+| Painel de solicitações (administrador) | [candidodm.github.io/verde-vivo-paisagismo/admin.html](https://candidodm.github.io/verde-vivo-paisagismo/admin.html) |
 
 > Nenhuma instalação necessária — acesse diretamente pelo navegador em qualquer dispositivo.
 
@@ -48,10 +51,11 @@ O **Verde Vivo** é uma aplicação web que permite que clientes solicitem e aco
 - [x] **Regras de segurança do Firestore** por perfil e consulta pública por protocolo sem expor dados pessoais
 - [x] Agendamento de data e período da visita técnica (segunda a sábado, até 60 dias)
 - [x] Área do cliente com histórico e linha do tempo da solicitação
-- [ ] Agenda da equipe e atribuição de responsável
-- [ ] Notificação automática por e-mail a cada mudança de status (EmailJS)
-- [ ] Painel de indicadores para o administrador
-- [ ] Avaliação do serviço pelo cliente
+- [x] Agenda da equipe, agenda geral, confirmação da visita e atribuição de responsável
+- [x] Notificação automática por e-mail a cada mudança de status e na confirmação da visita (EmailJS)
+- [x] Painel de indicadores: volume, tempo médio de atendimento, serviços mais pedidos, satisfação e pendências
+- [x] Avaliação do serviço pelo cliente (1 a 5 estrelas e comentário)
+- [x] Cadastro da equipe pelo painel, com troca de perfil e bloqueio de acesso
 
 ---
 
@@ -76,10 +80,17 @@ verde-vivo-paisagismo/
 ├── login.html              # Entrar, criar conta e recuperar senha
 ├── minhas-solicitacoes.html # Cliente: lista dos próprios pedidos
 ├── solicitacao.html        # Detalhe do pedido: visita, linha do tempo e dados
+├── agenda.html             # Equipe: minha agenda · Admin: agenda geral
+├── atendimento.html        # Atendimento: iniciar/concluir, confirmar visita, responsável
+├── indicadores.html        # Admin: painel de indicadores de gestão
+├── usuarios.html           # Admin: cadastro da equipe, perfis e bloqueio
 ├── admin.html              # Painel da equipe e do administrador
 ├── js/
 │   ├── firebase.js         # Inicialização única do Firebase (app, auth, db)
 │   ├── sessao.js           # Sessão, perfis e proteção das páginas
+│   ├── acoes.js            # Mudar status, confirmar visita, atribuir responsável
+│   ├── indicadores.js      # Cálculo dos indicadores (funções puras)
+│   ├── notificacoes.js     # Envio de e-mails pelo EmailJS (chaves ficam aqui)
 │   └── ui.js               # Funções de interface (status, datas, etapas)
 ├── css/
 │   └── base.css            # Estilos compartilhados das páginas novas
@@ -136,8 +147,8 @@ O login fixo da primeira versão foi substituído pelo **Firebase Authentication
 | Perfil | Como é criado | Para onde vai após o login |
 |---|---|---|
 | Cliente | Cadastro pelo próprio site | Minhas solicitações |
-| Equipe de campo | Administrador altera o perfil para `equipe` | Painel |
-| Administrador | Perfil alterado para `admin` no console do Firebase | Painel |
+| Equipe de campo | Cadastrada pelo administrador em "Equipe" (recebe e-mail para criar a senha) | Minha agenda (só as visitas atribuídas a ela) |
+| Administrador | O primeiro, no console do Firebase; os demais, pela tela "Equipe" | Painel de solicitações |
 
 Veja o passo a passo em [CONFIGURAR-FIREBASE.md](CONFIGURAR-FIREBASE.md).
 

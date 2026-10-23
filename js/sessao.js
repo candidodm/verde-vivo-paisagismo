@@ -18,9 +18,9 @@ export const PERFIS = Object.freeze({ CLIENTE: "cliente", EQUIPE: "equipe", ADMI
 export const PERFIS_EQUIPE = [PERFIS.EQUIPE, PERFIS.ADMIN];
 
 // Página para onde cada perfil vai depois do login.
-// (Na etapa 3, a equipe passa a ir para agenda.html)
 export function paginaInicial(perfil) {
-  if (perfil === PERFIS.ADMIN || perfil === PERFIS.EQUIPE) return "admin.html";
+  if (perfil === PERFIS.ADMIN) return "admin.html";
+  if (perfil === PERFIS.EQUIPE) return "agenda.html";
   return "minhas-solicitacoes.html";
 }
 

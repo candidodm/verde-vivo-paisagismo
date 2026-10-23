@@ -55,29 +55,40 @@ service cloud.firestore {
         && request.resource.data.clienteId == request.auth.uid
         && request.resource.data.status == 'Solicitado';
 
-      // Cliente lê só as próprias; equipe e admin leem todas.
-      // (Consultas do cliente precisam filtrar por clienteId == uid.)
-      allow read: if ehEquipe()
+      // Admin lê todas; a equipe lê as atribuídas a ela; o cliente, as próprias.
+      // (Consultas da equipe filtram por responsavelId e as do cliente por clienteId.)
+      allow read: if ehAdmin()
+        || (ehEquipe() && resource.data.responsavelId == request.auth.uid)
         || (logado() && resource.data.clienteId == request.auth.uid);
 
-      allow update: if ehEquipe();
+      // Admin altera tudo. A equipe só altera atendimentos atribuídos a ela e
+      // não pode trocar o responsável.
+      allow update: if ehAdmin()
+        || (ehEquipe()
+            && resource.data.responsavelId == request.auth.uid
+            && request.resource.data.responsavelId == resource.data.responsavelId);
       allow delete: if ehAdmin();
 
-      // ── Linha do tempo: uma entrada por mudança de status ─────────────────
-      // Ninguém edita ou apaga entradas: o histórico só cresce.
+      // ── Linha do tempo: uma entrada por evento (status, visita, responsável)
+      // Entradas não são apagadas nem reescritas: o histórico só cresce.
       match /historico/{entrada} {
-        allow read: if ehEquipe()
+        allow read: if ehAdmin()
+          || (logado() && get(/databases/$(database)/documents/solicitacoes/$(id)).data.responsavelId == request.auth.uid)
           || (logado() && get(/databases/$(database)/documents/solicitacoes/$(id)).data.clienteId == request.auth.uid);
 
-        // Equipe registra mudanças. O cliente só registra a entrada inicial,
-        // no mesmo lote em que cria a solicitação (por isso getAfter).
-        allow create: if ehEquipe()
+        // Admin e o responsável registram mudanças. O cliente só registra a
+        // entrada inicial, no mesmo lote em que cria a solicitação (getAfter).
+        allow create: if ehAdmin()
+          || (ehEquipe() && get(/databases/$(database)/documents/solicitacoes/$(id)).data.responsavelId == request.auth.uid)
           || (logado()
               && request.resource.data.statusNovo == 'Solicitado'
               && request.resource.data.alteradoPor == request.auth.uid
               && getAfter(/databases/$(database)/documents/solicitacoes/$(id)).data.clienteId == request.auth.uid);
 
-        allow update, delete: if false;
+        // Única alteração permitida: marcar que o cliente foi notificado.
+        allow update: if (ehAdmin() || ehEquipe())
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notificado']);
+        allow delete: if false;
       }
     }
 
@@ -95,6 +106,31 @@ service cloud.firestore {
             && request.resource.data.status == 'Solicitado');
 
       allow update: if ehEquipe();
+      allow delete: if ehAdmin();
+    }
+
+    // ── Avaliações: uma por solicitação (o id do documento é o id do pedido) ─
+    match /avaliacoes/{solicitacaoId} {
+      function pedido() {
+        return get(/databases/$(database)/documents/solicitacoes/$(solicitacaoId)).data;
+      }
+
+      // Só o cliente dono, só depois de concluído, nota inteira de 1 a 5.
+      allow create: if logado()
+        && pedido().clienteId == request.auth.uid
+        && pedido().status == 'Concluído'
+        && request.resource.data.clienteId == request.auth.uid
+        && request.resource.data.solicitacaoId == solicitacaoId
+        && request.resource.data.nota is int
+        && request.resource.data.nota >= 1 && request.resource.data.nota <= 5
+        && (!('comentario' in request.resource.data) || request.resource.data.comentario.size() <= 500);
+
+      allow read: if ehAdmin()
+        || (logado() && resource.data.clienteId == request.auth.uid)
+        || (ehEquipe() && resource.data.responsavelId == request.auth.uid);
+
+      // Avaliação enviada não é editada; o admin pode remover se necessário.
+      allow update: if false;
       allow delete: if ehAdmin();
     }
 

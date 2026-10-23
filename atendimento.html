@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verde Vivo — Atendimento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    .detalhe { display: grid; gap: 1rem; }
+    .topo-detalhe { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem; }
+    .protocolo { font-family: monospace; font-size: 0.82rem; color: #9aaba3; letter-spacing: 0.06em; }
+    .titulo { font-family: 'Playfair Display', serif; color: var(--verde-escuro); font-size: 1.35rem; font-weight: 600; }
+    h2.secao { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texto-suave); font-weight: 500; margin-bottom: 0.75rem; }
+
+    /* Ações principais: botões grandes, pensados para o celular em campo */
+    .acao-principal { display: grid; gap: 0.6rem; }
+    .btn-grande { width: 100%; padding: 1rem; font-size: 1.02rem; border-radius: 12px; }
+    .btn-perigo { background: transparent; color: var(--erro); border-color: #f5c6c6; }
+    .btn-perigo:hover { background: #fce4e4; }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    textarea, select, input[type=date] {
+      width: 100%; font-family: inherit; font-size: 0.95rem; color: var(--texto); background: var(--creme);
+      border: 1px solid var(--creme-escuro); border-radius: 8px; padding: 0.65rem 0.8rem; outline: none;
+    }
+    textarea { min-height: 70px; resize: vertical; }
+    textarea:focus, select:focus, input:focus { border-color: var(--verde-vivo); background: var(--branco); }
+    .rotulo { display: block; font-size: 0.78rem; color: var(--texto-suave); margin-bottom: 0.35rem; font-weight: 500; }
+    .linha { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem; }
+    .linha-acao { display: flex; gap: 0.6rem; align-items: end; }
+    .linha-acao > div { flex: 1; }
+    .aviso { font-size: 0.85rem; color: var(--texto-suave); background: var(--creme); border-radius: 8px; padding: 0.7rem 0.85rem; }
+
+    .contato { display: grid; gap: 0.35rem; font-size: 0.95rem; }
+    .contato a { color: var(--verde-vivo); text-decoration: none; font-weight: 500; }
+    .contato a:hover { text-decoration: underline; }
+    .atalhos { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.6rem; }
+    .atalhos .btn { padding: 0.5rem 0.9rem; font-size: 0.85rem; }
+
+    .descricao { margin-top: 0.75rem; padding: 0.85rem; background: var(--creme); border-radius: 8px; font-size: 0.92rem; line-height: 1.55; color: var(--texto-suave); white-space: pre-wrap; }
+    .foto { margin-top: 0.75rem; }
+    .foto img { max-width: 100%; max-height: 280px; border-radius: 10px; object-fit: cover; }
+    .selo { display: inline-block; font-size: 0.75rem; padding: 2px 9px; border-radius: 12px; }
+    .selo.pendente { background: #fff8e1; color: #8b6914; }
+    .selo.confirmada { background: #e8f5e9; color: #1b5e20; }
+    .t-quem { font-size: 0.78rem; color: var(--texto-claro); }
+
+    @media (max-width: 600px) { .linha { grid-template-columns: 1fr; } .linha-acao { flex-direction: column; align-items: stretch; } }
+  </style>
+</head>
+<body>
+  <nav class="topo">
+    <a class="nav-logo" href="agenda.html">Verde <span>Vivo</span></a>
+    <div class="nav-direita">
+      <ul class="nav-links" id="nav-links"></ul>
+      <div class="nav-usuario" id="nav-usuario"></div>
+    </div>
+  </nav>
+
+  <main class="conteudo">
+    <a class="link-voltar" id="voltar" href="agenda.html">← Voltar à agenda</a>
+    <div id="area"></div>
+  </main>
+
+  <footer class="rodape">© 2026 Verde Vivo Paisagismo. Projeto Integrador — SENAC.</footer>
+
+  <script type="module">
+    import { db } from "./js/firebase.js";
+    import { exigirLogin, sair, PERFIS, PERFIS_EQUIPE, primeiroNome, esc } from "./js/sessao.js";
+    import {
+      badgeHTML, stepperHTML, formatarDataHora, descreverAgendamento, isoDaqui, ehDomingo,
+      navEquipeHTML, linkMapa, linkWhatsApp, mostrarToast, LOADING
+    } from "./js/ui.js";
+    import { mudarStatus, confirmarVisita, atribuirResponsavel } from "./js/acoes.js";
+    import { notificacoesAtivas } from "./js/notificacoes.js";
+    import { doc, getDoc, collection, query, orderBy, getDocs }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const sessao = await exigirLogin(PERFIS_EQUIPE);
+    window.sair = sair;
+    const $ = id => document.getElementById(id);
+    const ehAdmin = sessao.perfil.perfil === PERFIS.ADMIN;
+
+    $('nav-links').innerHTML = navEquipeHTML(sessao.perfil.perfil, '');
+    $('nav-usuario').innerHTML = `<span>${esc(primeiroNome(sessao.perfil))}</span><button type="button" onclick="sair()">Sair</button>`;
+    const veioDoPainel = document.referrer.includes('admin.html');
+    if (ehAdmin && veioDoPainel) { $('voltar').href = 'admin.html'; $('voltar').textContent = '← Voltar às solicitações'; }
+
+    const id = new URLSearchParams(location.search).get('id');
+    const area = $('area');
+    let s = null;
+    let equipe = [];
+    let avaliacao = null;
+
+    const fotoSegura = f => typeof f === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(f);
+    const avisoEmail = ok => ok ? ' Cliente avisado por e-mail.' : (notificacoesAtivas() ? ' (Não foi possível enviar o e-mail.)' : '');
+
+    function naoEncontrada() {
+      area.innerHTML = `<div class="cartao estado-vazio"><h2>Atendimento não encontrado</h2><p>Ele pode não estar atribuído a você.</p><a class="btn btn-escuro" href="${ehAdmin ? 'admin.html' : 'agenda.html'}">Voltar</a></div>`;
+    }
+
+    async function carregar() {
+      if (!id) return naoEncontrada();
+      area.innerHTML = LOADING;
+      try {
+        const snap = await getDoc(doc(db, 'solicitacoes', id));
+        if (!snap.exists()) return naoEncontrada();
+        s = { id: snap.id, ...snap.data() };
+        if (!ehAdmin && s.responsavelId !== sessao.user.uid) return naoEncontrada();
+
+        const [hist, membros] = await Promise.all([
+          getDocs(query(collection(db, 'solicitacoes', id, 'historico'), orderBy('dataHora', 'asc'))).catch(() => ({ docs: [] })),
+          ehAdmin ? getDocs(collection(db, 'usuarios')) : Promise.resolve({ docs: [] })
+        ]);
+        equipe = membros.docs.map(d => ({ uid: d.id, ...d.data() }))
+          .filter(u => (u.perfil === 'equipe' || u.perfil === 'admin') && u.ativo !== false)
+          .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+        avaliacao = null;
+        if (s.status === 'Concluído') {
+          try { const a = await getDoc(doc(db, 'avaliacoes', id)); if (a.exists()) avaliacao = a.data(); }
+          catch (e) { console.warn('Avaliação indisponível', e); }
+        }
+        renderizar(hist.docs.map(d => d.data()));
+      } catch (err) {
+        console.error(err);
+        if (err?.code === 'permission-denied') return naoEncontrada();
+        area.innerHTML = `<div class="cartao estado-vazio"><p>Não foi possível carregar o atendimento. Verifique sua conexão.</p></div>`;
+      }
+    }
+
+    function blocoAcoes() {
+      if (s.status === 'Concluído') {
+        const av = avaliacao
+          ? `<p style="margin-top:0.6rem"><span style="color:#c9a227;font-size:1.2rem">${'★'.repeat(avaliacao.nota)}<span style="color:var(--creme-escuro)">${'★'.repeat(5 - avaliacao.nota)}</span></span> <strong>${avaliacao.nota}/5</strong>${avaliacao.comentario ? ` — “${esc(avaliacao.comentario)}”` : ''}</p>`
+          : '<p class="t-quem" style="margin-top:0.5rem">O cliente ainda não avaliou o atendimento.</p>';
+        return `<p class="aviso">Atendimento concluído em ${esc(formatarDataHora(s.concluidoEm))}.</p>${av}`;
+      }
+      if (s.status === 'Cancelado') return `<p class="aviso">Solicitação cancelada.</p>`;
+      const proxima = s.status === 'Em Execução'
+        ? { status: 'Concluído', rotulo: '✓ Concluir atendimento' }
+        : { status: 'Em Execução', rotulo: '▶ Iniciar atendimento' };
+      return `
+        <div class="acao-principal">
+          <div>
+            <label class="rotulo" for="observacao">Observação (opcional — aparece na linha do tempo do cliente)</label>
+            <textarea id="observacao" placeholder="Ex.: serviço exigirá uma segunda visita para o plantio."></textarea>
+          </div>
+          <button class="btn btn-escuro btn-grande" id="btn-proximo" data-status="${proxima.status}">${proxima.rotulo}</button>
+          ${ehAdmin ? `<button class="btn btn-perigo" id="btn-cancelar">Cancelar solicitação</button>` : ''}
+        </div>`;
+    }
+
+    function blocoVisita() {
+      const ag = s.agendamento || {};
+      const selo = ag.data ? `<span class="selo ${ag.confirmado ? 'confirmada' : 'pendente'}">${ag.confirmado ? 'Confirmada' : 'Aguardando confirmação'}</span>` : '';
+      const resumo = `<p style="margin-bottom:0.6rem"><strong>${esc(descreverAgendamento(ag, { longo: true }))}</strong> ${selo}</p>`;
+      if (!ehAdmin || s.status === 'Concluído' || s.status === 'Cancelado') return resumo;
+      return resumo + `
+        <div class="linha">
+          <div><label class="rotulo" for="nova-data">Data</label><input type="date" id="nova-data" min="${isoDaqui(0)}" max="${isoDaqui(90)}" value="${esc(ag.data || '')}" /></div>
+          <div><label class="rotulo" for="novo-periodo">Período</label>
+            <select id="novo-periodo">
+              <option value="manha" ${ag.periodo === 'manha' ? 'selected' : ''}>Manhã (8h às 12h)</option>
+              <option value="tarde" ${ag.periodo === 'tarde' ? 'selected' : ''}>Tarde (13h às 17h)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-contorno" id="btn-confirmar">${ag.confirmado ? 'Remarcar visita' : 'Confirmar visita'}</button>`;
+    }
+
+    function blocoResponsavel() {
+      if (!ehAdmin) return '';
+      const opcoes = equipe.map(u => `<option value="${esc(u.uid)}" ${u.uid === s.responsavelId ? 'selected' : ''}>${esc(u.nome || u.email)}${u.perfil === 'admin' ? ' (admin)' : ''}</option>`).join('');
+      return `
+        <section class="cartao">
+          <h2 class="secao">Responsável pelo atendimento</h2>
+          <div class="linha-acao">
+            <div>
+              <label class="rotulo" for="responsavel">Membro da equipe</label>
+              <select id="responsavel"><option value="">— Sem responsável —</option>${opcoes}</select>
+            </div>
+            <button class="btn btn-contorno" id="btn-atribuir">Salvar responsável</button>
+          </div>
+          ${equipe.length <= 1 ? '<p class="aviso" style="margin-top:0.6rem">Para cadastrar membros da equipe, mude o perfil do usuário para "equipe" no Firebase (na etapa 4 isso poderá ser feito pelo painel).</p>' : ''}
+        </section>`;
+    }
+
+    function renderizar(historico) {
+      document.title = `Verde Vivo — ${s.protocolo || 'Atendimento'}`;
+      const wa = linkWhatsApp(s.telefone);
+      area.innerHTML = `
+        <div class="detalhe">
+          <section class="cartao">
+            <div class="topo-detalhe">
+              <div><div class="protocolo">${esc(s.protocolo)}</div><div class="titulo">${esc(s.tipoServico)}</div></div>
+              ${badgeHTML(s.status)}
+            </div>
+            ${stepperHTML(s.status)}
+          </section>
+
+          <section class="cartao">
+            <h2 class="secao">Atendimento</h2>
+            ${blocoAcoes()}
+          </section>
+
+          <section class="cartao">
+            <h2 class="secao">Visita técnica</h2>
+            ${blocoVisita()}
+          </section>
+
+          ${blocoResponsavel()}
+
+          <section class="cartao">
+            <h2 class="secao">Cliente e local</h2>
+            <div class="contato">
+              <span><strong>${esc(s.nome)}</strong></span>
+              <span>${esc(s.endereco)}</span>
+            </div>
+            <div class="atalhos">
+              <a class="btn btn-contorno" href="${esc(linkMapa(s.endereco))}" target="_blank" rel="noopener">📍 Abrir no mapa</a>
+              <a class="btn btn-contorno" href="tel:${esc(String(s.telefone || '').replace(/\D/g, ''))}">📞 Ligar</a>
+              ${wa ? `<a class="btn btn-contorno" href="${esc(wa)}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ''}
+            </div>
+            <div class="descricao">${esc(s.descricao)}</div>
+            ${fotoSegura(s.foto) ? `<div class="foto"><img src="${esc(s.foto)}" alt="Foto do local enviada pelo cliente" /></div>` : ''}
+          </section>
+
+          <section class="cartao">
+            <h2 class="secao">Linha do tempo</h2>
+            <ul class="timeline">${(historico.length ? historico : [{ statusNovo: 'Solicitado', dataHora: s.criadoEm }]).map((h, i, arr) => `
+              <li class="${i === arr.length - 1 ? 'atual' : ''}">
+                <div class="t-titulo">${esc(h.titulo || h.statusNovo)}</div>
+                <div class="t-data">${esc(formatarDataHora(h.dataHora))}${h.observacao ? ' · ' + esc(h.observacao) : ''}</div>
+                ${h.alteradoPorNome ? `<div class="t-quem">por ${esc(h.alteradoPorNome)}${h.notificado ? ' · cliente notificado' : ''}</div>` : ''}
+              </li>`).join('')}
+            </ul>
+          </section>
+        </div>`;
+      ligarEventos();
+    }
+
+    async function executar(btn, fn) {
+      document.querySelectorAll('#area button').forEach(b => b.disabled = true);
+      const original = btn.textContent;
+      btn.textContent = 'Salvando...';
+      try {
+        await fn();
+        await carregar();
+      } catch (err) {
+        console.error(err);
+        mostrarToast(err?.code === 'permission-denied' ? 'Sem permissão para esta ação.' : 'Erro ao salvar. Tente novamente.', true);
+        document.querySelectorAll('#area button').forEach(b => b.disabled = false);
+        btn.textContent = original;
+      }
+    }
+
+    function ligarEventos() {
+      $('btn-proximo')?.addEventListener('click', e => {
+        const novo = e.currentTarget.dataset.status;
+        executar(e.currentTarget, async () => {
+          const r = await mudarStatus(sessao, s, novo, $('observacao').value);
+          mostrarToast(`Status atualizado para ${novo}.${avisoEmail(r.notificado)}`);
+        });
+      });
+
+      $('btn-cancelar')?.addEventListener('click', e => {
+        const btn = e.currentTarget;
+        if (btn.dataset.confirmar !== 'sim') {
+          btn.dataset.confirmar = 'sim';
+          btn.textContent = 'Clique de novo para confirmar o cancelamento';
+          return;
+        }
+        executar(btn, async () => {
+          const r = await mudarStatus(sessao, s, 'Cancelado', $('observacao')?.value || '');
+          mostrarToast(`Solicitação cancelada.${avisoEmail(r.notificado)}`);
+        });
+      });
+
+      $('btn-confirmar')?.addEventListener('click', e => {
+        const data = $('nova-data').value, periodo = $('novo-periodo').value;
+        if (!data) return mostrarToast('Escolha a data da visita.', true);
+        if (ehDomingo(data)) return mostrarToast('Não atendemos aos domingos.', true);
+        executar(e.currentTarget, async () => {
+          const r = await confirmarVisita(sessao, s, data, periodo);
+          mostrarToast(`Visita confirmada.${avisoEmail(r.notificado)}`);
+        });
+      });
+
+      $('btn-atribuir')?.addEventListener('click', e => {
+        const uid = $('responsavel').value;
+        if ((uid || null) === (s.responsavelId || null)) return mostrarToast('Responsável já definido.');
+        executar(e.currentTarget, async () => {
+          await atribuirResponsavel(sessao, s, equipe.find(u => u.uid === uid) || null);
+          mostrarToast('Responsável atualizado.');
+        });
+      });
+    }
+
+    carregar();
+  </script>
+</body>
+</html>

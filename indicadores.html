@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verde Vivo — Indicadores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    main.conteudo { max-width: 980px; }
+    .cabecalho-inner { max-width: 980px; }
+    .barra { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.25rem; align-items: center; }
+    .chip {
+      padding: 0.42rem 0.95rem; border-radius: 20px; border: 1.5px solid var(--creme-escuro); background: var(--branco);
+      color: var(--texto-suave); font-family: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer;
+    }
+    .chip.ativo { background: var(--verde-escuro); border-color: var(--verde-escuro); color: var(--branco); }
+    .barra .info { margin-left: auto; font-size: 0.8rem; color: var(--texto-claro); }
+
+    /* Cartões de indicadores */
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem; margin-bottom: 1rem; }
+    .kpi { padding: 1rem 1.1rem; }
+    .kpi-rotulo { font-size: 0.78rem; color: var(--texto-suave); margin-bottom: 0.35rem; }
+    .kpi-valor { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--verde-escuro); line-height: 1.1; }
+    .kpi-valor small { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--texto-suave); margin-left: 3px; }
+    .kpi-nota { font-size: 0.78rem; color: var(--texto-claro); margin-top: 0.3rem; }
+    .kpi a { color: var(--verde-vivo); text-decoration: none; }
+
+    /* Gráficos de barras (uma série, rótulos diretos) */
+    .graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .grafico h2 { font-size: 0.95rem; color: var(--verde-escuro); font-weight: 500; margin-bottom: 0.2rem; }
+    .grafico .sub { font-size: 0.78rem; color: var(--texto-claro); margin-bottom: 0.9rem; }
+    .barras-h { display: grid; gap: 0.55rem; }
+    .linha-barra { display: grid; grid-template-columns: 9.5rem 1fr 2.2rem; gap: 0.6rem; align-items: center; font-size: 0.85rem; }
+    .linha-barra .rot { color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .linha-barra .trilho { height: 14px; background: transparent; position: relative; }
+    .linha-barra .valor-barra { height: 100%; background: var(--verde-vivo); border-radius: 0 4px 4px 0; }
+    .linha-barra .num { color: var(--texto-suave); text-align: right; font-variant-numeric: tabular-nums; }
+    .linha-barra:hover .valor-barra { background: var(--verde-medio); }
+
+    .colunas { display: flex; align-items: flex-end; gap: 6px; height: 160px; padding-top: 1.2rem; border-bottom: 1px solid var(--creme-escuro); }
+    .coluna { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; }
+    .coluna .barra-v { width: 100%; max-width: 34px; background: var(--verde-vivo); border-radius: 4px 4px 0 0; }
+    .coluna:hover .barra-v { background: var(--verde-medio); }
+    .coluna .topo-num { font-size: 0.72rem; color: var(--texto-suave); margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+    .eixo { display: flex; gap: 6px; margin-top: 4px; }
+    .eixo span { flex: 1; text-align: center; font-size: 0.68rem; color: var(--texto-claro); }
+
+    .avaliacoes { display: grid; gap: 0.75rem; }
+    .avaliacao { border-bottom: 1px solid var(--creme-escuro); padding-bottom: 0.7rem; }
+    .avaliacao:last-child { border-bottom: none; padding-bottom: 0; }
+    .estrelas { color: #c9a227; letter-spacing: 1px; }
+    .estrelas .vazia { color: var(--creme-escuro); }
+    .av-texto { font-size: 0.9rem; color: var(--texto); margin-top: 0.2rem; }
+    .av-meta { font-size: 0.78rem; color: var(--texto-claro); margin-top: 0.15rem; }
+    .vazio-mini { font-size: 0.88rem; color: var(--texto-claro); padding: 0.5rem 0; }
+
+    details.tabela { margin-top: 0.8rem; font-size: 0.82rem; }
+    details.tabela summary { cursor: pointer; color: var(--verde-vivo); }
+    details.tabela table { width: 100%; border-collapse: collapse; margin-top: 0.4rem; }
+    details.tabela td, details.tabela th { padding: 4px 6px; border-bottom: 1px solid var(--creme-escuro); text-align: left; }
+    details.tabela td:last-child, details.tabela th:last-child { text-align: right; }
+
+    @media (max-width: 820px) { .kpis { grid-template-columns: 1fr 1fr; } .graficos { grid-template-columns: 1fr; } }
+    @media (max-width: 420px) { .linha-barra { grid-template-columns: 7rem 1fr 2rem; } .kpi-valor { font-size: 1.6rem; } }
+  </style>
+</head>
+<body>
+  <nav class="topo">
+    <a class="nav-logo" href="admin.html">Verde <span>Vivo</span></a>
+    <div class="nav-direita">
+      <ul class="nav-links" id="nav-links"></ul>
+      <div class="nav-usuario" id="nav-usuario"></div>
+    </div>
+  </nav>
+
+  <header class="cabecalho">
+    <div class="cabecalho-inner">
+      <div>
+        <p class="tag">Administrador</p>
+        <h1>Indicadores de gestão</h1>
+        <p>Volume, tempo de atendimento, serviços mais procurados e satisfação dos clientes.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <div class="barra" id="periodos">
+      <button class="chip" data-dias="7">7 dias</button>
+      <button class="chip ativo" data-dias="30">30 dias</button>
+      <button class="chip" data-dias="90">90 dias</button>
+      <button class="chip" data-dias="0">Tudo</button>
+      <span class="info" id="info-periodo"></span>
+    </div>
+    <div id="painel"></div>
+  </main>
+
+  <footer class="rodape">© 2026 Verde Vivo Paisagismo. Projeto Integrador — SENAC.</footer>
+
+  <script type="module">
+    import { db } from "./js/firebase.js";
+    import { exigirLogin, sair, PERFIS, primeiroNome, esc } from "./js/sessao.js";
+    import { navEquipeHTML, formatarDataHora, LOADING } from "./js/ui.js";
+    import { calcularIndicadores } from "./js/indicadores.js";
+    import { collection, getDocs }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const sessao = await exigirLogin([PERFIS.ADMIN]);
+    window.sair = sair;
+    const $ = id => document.getElementById(id);
+    $('nav-links').innerHTML = navEquipeHTML(sessao.perfil.perfil, 'indicadores.html');
+    $('nav-usuario').innerHTML = `<span>${esc(primeiroNome(sessao.perfil))}</span><button type="button" onclick="sair()">Sair</button>`;
+
+    let solicitacoes = [], avaliacoes = [], dias = 30;
+
+    const fmt = n => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+    const estrelas = n => '★'.repeat(n) + `<span class="vazia">${'★'.repeat(5 - n)}</span>`;
+
+    function tabela(titulo, linhas) {
+      return `<details class="tabela"><summary>Ver como tabela</summary><table>
+        <thead><tr><th>${esc(titulo)}</th><th>Quantidade</th></tr></thead>
+        <tbody>${linhas.map(([r, v]) => `<tr><td>${esc(r)}</td><td>${v}</td></tr>`).join('')}</tbody></table></details>`;
+    }
+
+    function barrasHorizontais(linhas, unidade) {
+      if (!linhas.length || linhas.every(([, v]) => v === 0)) return `<p class="vazio-mini">Sem dados no período.</p>`;
+      const max = Math.max(...linhas.map(([, v]) => v), 1);
+      return `<div class="barras-h">${linhas.map(([rot, v]) => `
+        <div class="linha-barra" title="${esc(rot)}: ${v} ${unidade}">
+          <span class="rot">${esc(rot)}</span>
+          <span class="trilho"><span class="valor-barra" style="display:block;width:${(v / max) * 100}%"></span></span>
+          <span class="num">${v}</span>
+        </div>`).join('')}</div>`;
+    }
+
+    function colunas(semanas) {
+      const max = Math.max(...semanas.map(s => s.total), 1);
+      return `
+        <div class="colunas">${semanas.map(s => `
+          <div class="coluna" title="Semana de ${esc(s.rotulo)}: ${s.total} solicitaç${s.total === 1 ? 'ão' : 'ões'}">
+            <span class="topo-num">${s.total || ''}</span>
+            <span class="barra-v" style="height:${(s.total / max) * 100}%"></span>
+          </div>`).join('')}
+        </div>
+        <div class="eixo">${semanas.map(s => `<span>${esc(s.rotulo)}</span>`).join('')}</div>`;
+    }
+
+    function renderizar() {
+      const ind = calcularIndicadores(solicitacoes, avaliacoes, dias);
+      $('info-periodo').textContent = dias ? `Desde ${ind.desde.toLocaleDateString('pt-BR')}` : 'Todo o histórico';
+
+      // Abaixo de 1 dia, mostra em horas (ex.: serviço feito no mesmo dia)
+      const emHoras = ind.tempoMedioDias != null && ind.tempoMedioDias < 1;
+      const tempo = ind.tempoMedioDias == null ? '—' : emHoras ? fmt(Math.max(ind.tempoMedioDias * 24, 0.1)) : fmt(ind.tempoMedioDias);
+      const unidadeTempo = emHoras ? 'horas' : 'dias';
+      const nota = ind.notaMedia == null ? '—' : fmt(ind.notaMedia);
+
+      $('painel').innerHTML = `
+        <div class="kpis">
+          <div class="cartao kpi"><div class="kpi-rotulo">Solicitações no período</div><div class="kpi-valor">${ind.total}</div>
+            <div class="kpi-nota">${ind.emAberto} em aberto agora</div></div>
+          <div class="cartao kpi"><div class="kpi-rotulo">Tempo médio de atendimento</div><div class="kpi-valor">${tempo}${ind.tempoMedioDias == null ? '' : `<small>${unidadeTempo}</small>`}</div>
+            <div class="kpi-nota">do pedido à conclusão · ${ind.concluidas} concluída${ind.concluidas === 1 ? '' : 's'}</div></div>
+          <div class="cartao kpi"><div class="kpi-rotulo">Satisfação dos clientes</div><div class="kpi-valor">${nota}${ind.notaMedia == null ? '' : '<small>de 5</small>'}</div>
+            <div class="kpi-nota">${ind.qtdAvaliacoes} avaliaç${ind.qtdAvaliacoes === 1 ? 'ão' : 'ões'}</div></div>
+          <div class="cartao kpi"><div class="kpi-rotulo">Pendências</div><div class="kpi-valor">${ind.aConfirmar + ind.semResponsavel}</div>
+            <div class="kpi-nota">${ind.aConfirmar} visita${ind.aConfirmar === 1 ? '' : 's'} a confirmar · ${ind.semResponsavel} sem responsável · <a href="admin.html">resolver</a></div></div>
+        </div>
+
+        <div class="graficos">
+          <section class="cartao grafico">
+            <h2>Solicitações por status</h2><p class="sub">Pedidos criados no período</p>
+            ${barrasHorizontais(ind.porStatus, 'solicitações')}
+            ${tabela('Status', ind.porStatus)}
+          </section>
+          <section class="cartao grafico">
+            <h2>Serviços mais solicitados</h2><p class="sub">Pedidos criados no período</p>
+            ${barrasHorizontais(ind.porTipo, 'solicitações')}
+            ${tabela('Tipo de serviço', ind.porTipo)}
+          </section>
+        </div>
+
+        <div class="graficos">
+          <section class="cartao grafico">
+            <h2>Novas solicitações por semana</h2><p class="sub">Últimas 8 semanas</p>
+            ${colunas(ind.porSemana)}
+            ${tabela('Semana', ind.porSemana.map(s => [s.rotulo, s.total]))}
+          </section>
+          <section class="cartao grafico">
+            <h2>Avaliações recentes</h2><p class="sub">Últimas 5 avaliações dos clientes</p>
+            ${ind.ultimasAvaliacoes.length ? `<div class="avaliacoes">${ind.ultimasAvaliacoes.map(a => `
+              <div class="avaliacao">
+                <div class="estrelas" aria-label="${a.nota} de 5 estrelas">${estrelas(a.nota)}</div>
+                ${a.comentario ? `<div class="av-texto">“${esc(a.comentario)}”</div>` : ''}
+                <div class="av-meta">${esc(a.tipoServico || '')}${a.responsavelNome ? ' · ' + esc(a.responsavelNome) : ''} · ${esc(formatarDataHora(a.criadoEm))}</div>
+              </div>`).join('')}</div>` : '<p class="vazio-mini">Nenhuma avaliação no período.</p>'}
+          </section>
+        </div>`;
+    }
+
+    async function carregar() {
+      $('painel').innerHTML = LOADING;
+      try {
+        const [s, a] = await Promise.all([getDocs(collection(db, 'solicitacoes')), getDocs(collection(db, 'avaliacoes'))]);
+        solicitacoes = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        avaliacoes = a.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizar();
+      } catch (err) {
+        console.error(err);
+        $('painel').innerHTML = `<div class="cartao estado-vazio"><p>Não foi possível carregar os indicadores. Verifique sua conexão.</p></div>`;
+      }
+    }
+
+    $('periodos').addEventListener('click', e => {
+      const b = e.target.closest('.chip'); if (!b) return;
+      dias = Number(b.dataset.dias);
+      document.querySelectorAll('#periodos .chip').forEach(c => c.classList.toggle('ativo', c === b));
+      renderizar();
+    });
+
+    carregar();
+  </script>
+</body>
+</html>

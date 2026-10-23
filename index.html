@@ -613,7 +613,8 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { db } from "./js/firebase.js";
-    import { obterSessao, sair, PERFIS, primeiroNome, esc } from "./js/sessao.js";
+    import { obterSessao, sair, PERFIS, primeiroNome, esc, paginaInicial } from "./js/sessao.js";
+    import { enviarNotificacao } from "./js/notificacoes.js";
     import { isoDaqui, ehDomingo, descreverAgendamento } from "./js/ui.js";
     import { collection, doc, writeBatch, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -634,7 +635,7 @@
         // Equipe e administrador não abrem solicitações em nome próprio
         document.getElementById('entrar-titulo').textContent = 'Você está conectado como equipe';
         document.getElementById('entrar-texto').textContent = 'O formulário de solicitação é usado pelos clientes. Use o painel para gerenciar os atendimentos.';
-        document.getElementById('entrar-acoes').innerHTML = `<a class="btn-primary" href="admin.html">Ir para o painel</a>`;
+        document.getElementById('entrar-acoes').innerHTML = `<a class="btn-primary" href="${paginaInicial(sessao.perfil.perfil)}">Ir para o painel</a>`;
         document.getElementById('tela-entrar').style.display = 'block';
       } else {
         // Cliente: formulário já preenchido com os dados do cadastro
@@ -808,6 +809,12 @@
         document.getElementById('codigo-protocolo').textContent = protocolo;
         document.getElementById('link-acompanhar').href = `solicitacao.html?id=${refSolicitacao.id}`;
         document.getElementById('resumo-agendamento').textContent = descreverAgendamento(agendamento, { longo: true });
+
+        // E-mail de confirmação (não bloqueia a tela; falhas são ignoradas)
+        enviarNotificacao({
+          email: sessao.user.email, nome, evento: 'Solicitado', protocolo, status: 'Solicitado',
+          id: refSolicitacao.id, dados: { tipoServico, visita: descreverAgendamento(agendamento, { longo: true }) }
+        });
         document.getElementById('tela-form').style.display = 'none';
         document.getElementById('tela-sucesso').style.display = 'block';
 

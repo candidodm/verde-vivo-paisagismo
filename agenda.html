@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verde Vivo — Agenda</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    .barra { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1.25rem; }
+    .chip {
+      padding: 0.42rem 0.95rem; border-radius: 20px; border: 1.5px solid var(--creme-escuro); background: var(--branco);
+      color: var(--texto-suave); font-family: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer;
+    }
+    .chip.ativo { background: var(--verde-escuro); border-color: var(--verde-escuro); color: var(--branco); }
+    .barra input[type=date], .barra select {
+      font-family: inherit; font-size: 0.85rem; color: var(--texto); background: var(--branco);
+      border: 1.5px solid var(--creme-escuro); border-radius: 20px; padding: 0.38rem 0.8rem; outline: none;
+    }
+    .barra .direita { margin-left: auto; }
+
+    .dia { margin-bottom: 1.5rem; }
+    .dia-titulo { font-family: 'Playfair Display', serif; color: var(--verde-escuro); font-size: 1.1rem; margin-bottom: 0.6rem; display: flex; align-items: baseline; gap: 0.5rem; }
+    .dia-titulo small { font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: var(--texto-claro); font-weight: 400; }
+    .periodo-rotulo { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--texto-suave); margin: 0.75rem 0 0.4rem; }
+
+    a.visita-card { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 1rem; text-decoration: none; color: inherit; }
+    a.visita-card:hover { border-color: var(--verde-claro); box-shadow: 0 4px 14px rgba(26,58,42,0.08); }
+    .v-tipo { font-weight: 500; color: var(--verde-escuro); }
+    .v-end { font-size: 0.88rem; color: var(--texto-suave); }
+    .v-meta { font-size: 0.8rem; color: var(--texto-claro); display: flex; flex-wrap: wrap; gap: 0.25rem 0.85rem; margin-top: 0.2rem; }
+    .v-lado { grid-column: 2; grid-row: 1 / 4; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
+    .selo { font-size: 0.72rem; padding: 2px 9px; border-radius: 12px; white-space: nowrap; }
+    .selo.pendente { background: #fff8e1; color: #8b6914; }
+    .selo.confirmada { background: #e8f5e9; color: #1b5e20; }
+    .selo.sem-resp { background: #fce4e4; color: #7b1f1f; }
+    .resumo { font-size: 0.85rem; color: var(--texto-suave); margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <nav class="topo">
+    <a class="nav-logo" href="agenda.html">Verde <span>Vivo</span></a>
+    <div class="nav-direita">
+      <ul class="nav-links" id="nav-links"></ul>
+      <div class="nav-usuario" id="nav-usuario"></div>
+    </div>
+  </nav>
+
+  <header class="cabecalho">
+    <div class="cabecalho-inner">
+      <div>
+        <p class="tag" id="tag-perfil">Equipe</p>
+        <h1 id="titulo">Minha agenda</h1>
+        <p id="subtitulo">Visitas técnicas atribuídas a você.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <div class="barra">
+      <button class="chip ativo" data-janela="hoje">Hoje</button>
+      <button class="chip" data-janela="amanha">Amanhã</button>
+      <button class="chip" data-janela="semana">Próximos 7 dias</button>
+      <input type="date" id="data-escolhida" aria-label="Escolher data" />
+      <select id="filtro-membro" class="direita" hidden aria-label="Filtrar por responsável"></select>
+    </div>
+    <p class="resumo" id="resumo"></p>
+    <div id="agenda"></div>
+  </main>
+
+  <footer class="rodape">© 2026 Verde Vivo Paisagismo. Projeto Integrador — SENAC.</footer>
+
+  <script type="module">
+    import { db } from "./js/firebase.js";
+    import { exigirLogin, sair, PERFIS, PERFIS_EQUIPE, primeiroNome, esc } from "./js/sessao.js";
+    import { badgeHTML, formatarDataAgendada, isoDaqui, PERIODOS, navEquipeHTML, ROTULO_PERFIL, LOADING } from "./js/ui.js";
+    import { collection, query, where, getDocs }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const sessao = await exigirLogin(PERFIS_EQUIPE);
+    window.sair = sair;
+    const $ = id => document.getElementById(id);
+    const ehAdmin = sessao.perfil.perfil === PERFIS.ADMIN;
+
+    $('nav-links').innerHTML = navEquipeHTML(sessao.perfil.perfil, 'agenda.html');
+    $('nav-usuario').innerHTML = `<span>${esc(primeiroNome(sessao.perfil))}</span><button type="button" onclick="sair()">Sair</button>`;
+    $('tag-perfil').textContent = ROTULO_PERFIL[sessao.perfil.perfil];
+    if (ehAdmin) {
+      $('titulo').textContent = 'Agenda geral';
+      $('subtitulo').textContent = 'Visitas técnicas de toda a equipe.';
+    }
+
+    let visitas = [];
+    let janela = 'hoje';
+    let membro = 'todos';
+
+    async function carregar() {
+      $('agenda').innerHTML = LOADING;
+      try {
+        // Equipe: só as visitas atribuídas a ela (exigido pelas regras).
+        // Admin: todas. Filtros de data são feitos aqui, sem índice composto.
+        const q = ehAdmin
+          ? collection(db, 'solicitacoes')
+          : query(collection(db, 'solicitacoes'), where('responsavelId', '==', sessao.user.uid));
+        const snap = await getDocs(q);
+        visitas = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(s => s.agendamento?.data && s.status !== 'Cancelado');
+
+        if (ehAdmin) montarFiltroMembros();
+        renderizar();
+      } catch (err) {
+        console.error(err);
+        $('agenda').innerHTML = `<div class="cartao estado-vazio"><p>Não foi possível carregar a agenda. Verifique sua conexão.</p></div>`;
+      }
+    }
+
+    function montarFiltroMembros() {
+      const nomes = new Map();
+      visitas.forEach(v => { if (v.responsavelId) nomes.set(v.responsavelId, v.responsavelNome || 'Sem nome'); });
+      const sel = $('filtro-membro');
+      sel.innerHTML = `<option value="todos">Toda a equipe</option><option value="sem">Sem responsável</option>` +
+        [...nomes].sort((a, b) => a[1].localeCompare(b[1])).map(([id, n]) => `<option value="${esc(id)}">${esc(n)}</option>`).join('');
+      sel.value = membro;
+      sel.hidden = false;
+    }
+
+    function intervalo() {
+      if (janela === 'hoje') return [isoDaqui(0), isoDaqui(0)];
+      if (janela === 'amanha') return [isoDaqui(1), isoDaqui(1)];
+      if (janela === 'semana') return [isoDaqui(0), isoDaqui(6)];
+      return [janela, janela]; // data escolhida
+    }
+
+    function renderizar() {
+      const [ini, fim] = intervalo();
+      let lista = visitas.filter(v => v.agendamento.data >= ini && v.agendamento.data <= fim);
+      if (ehAdmin && membro === 'sem') lista = lista.filter(v => !v.responsavelId);
+      else if (ehAdmin && membro !== 'todos') lista = lista.filter(v => v.responsavelId === membro);
+
+      const pendentes = lista.filter(v => !v.agendamento.confirmado).length;
+      $('resumo').textContent = lista.length
+        ? `${lista.length} visita${lista.length > 1 ? 's' : ''}${pendentes ? ` · ${pendentes} aguardando confirmação` : ''}`
+        : '';
+
+      if (!lista.length) {
+        $('agenda').innerHTML = `<div class="cartao estado-vazio"><h2>Nenhuma visita neste período</h2><p>${ehAdmin ? 'Escolha outro dia ou outro membro da equipe.' : 'Quando o administrador atribuir uma visita a você, ela aparece aqui.'}</p></div>`;
+        return;
+      }
+
+      const porDia = {};
+      lista.forEach(v => (porDia[v.agendamento.data] ||= []).push(v));
+      const ordemPeriodo = { manha: 0, tarde: 1 };
+
+      $('agenda').innerHTML = Object.keys(porDia).sort().map(dia => {
+        const doDia = porDia[dia].sort((a, b) => (ordemPeriodo[a.agendamento.periodo] ?? 2) - (ordemPeriodo[b.agendamento.periodo] ?? 2));
+        const rotuloDia = dia === isoDaqui(0) ? 'Hoje' : dia === isoDaqui(1) ? 'Amanhã' : '';
+        let periodoAtual = null;
+        const itens = doDia.map(v => {
+          let cab = '';
+          if (v.agendamento.periodo !== periodoAtual) {
+            periodoAtual = v.agendamento.periodo;
+            cab = `<div class="periodo-rotulo">${esc(PERIODOS[periodoAtual] || 'Período não informado')}</div>`;
+          }
+          return cab + `
+            <a class="cartao visita-card" href="atendimento.html?id=${encodeURIComponent(v.id)}" style="margin-bottom:0.6rem">
+              <div class="v-tipo">${esc(v.tipoServico)}</div>
+              <div class="v-end">${esc(v.endereco)}</div>
+              <div class="v-meta">
+                <span>${esc(v.nome)} · ${esc(v.telefone)}</span>
+                <span>${esc(v.protocolo)}</span>
+                ${ehAdmin ? `<span>Responsável: ${esc(v.responsavelNome || '—')}</span>` : ''}
+              </div>
+              <div class="v-lado">
+                ${badgeHTML(v.status)}
+                <span class="selo ${v.agendamento.confirmado ? 'confirmada' : 'pendente'}">${v.agendamento.confirmado ? 'Confirmada' : 'A confirmar'}</span>
+                ${ehAdmin && !v.responsavelId ? '<span class="selo sem-resp">Sem responsável</span>' : ''}
+              </div>
+            </a>`;
+        }).join('');
+        const tituloDia = formatarDataAgendada(dia, { longo: true });
+        return `<section class="dia"><h2 class="dia-titulo">${esc(tituloDia.charAt(0).toUpperCase() + tituloDia.slice(1))} ${rotuloDia ? `<small>${rotuloDia}</small>` : ''}</h2>${itens}</section>`;
+      }).join('');
+    }
+
+    document.querySelector('.barra').addEventListener('click', e => {
+      const b = e.target.closest('.chip');
+      if (!b) return;
+      janela = b.dataset.janela;
+      $('data-escolhida').value = '';
+      document.querySelectorAll('.chip').forEach(c => c.classList.toggle('ativo', c === b));
+      renderizar();
+    });
+    $('data-escolhida').addEventListener('change', e => {
+      if (!e.target.value) return;
+      janela = e.target.value;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('ativo'));
+      renderizar();
+    });
+    $('filtro-membro').addEventListener('change', e => { membro = e.target.value; renderizar(); });
+
+    carregar();
+  </script>
+</body>
+</html>

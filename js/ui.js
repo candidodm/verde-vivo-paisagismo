@@ -82,3 +82,23 @@ export function mostrarToast(msg, erro = false) {
 }
 
 export const LOADING = `<div class="loading-dots"><span></span><span></span><span></span></div>`;
+
+// Menu das páginas da equipe. Admin vê todas as áreas; equipe vê só a agenda.
+export function navEquipeHTML(perfil, ativo) {
+  const links = perfil === "admin"
+    ? [["admin.html", "Solicitações"], ["agenda.html", "Agenda"], ["indicadores.html", "Indicadores"], ["usuarios.html", "Equipe"]]
+    : [["agenda.html", "Minha agenda"]];
+  return links.map(([href, rotulo]) =>
+    `<li><a href="${href}"${href === ativo ? ' class="ativo"' : ""}>${rotulo}</a></li>`).join("");
+}
+
+export const ROTULO_PERFIL = Object.freeze({ admin: "Administrador", equipe: "Equipe de campo", cliente: "Cliente" });
+
+// Links úteis para a equipe em campo
+export function linkMapa(endereco) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco || "")}`;
+}
+export function linkWhatsApp(telefone) {
+  const n = String(telefone || "").replace(/\D/g, "");
+  return n ? `https://wa.me/55${n}` : "";
+}
