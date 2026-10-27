@@ -9,9 +9,9 @@
 // apenas não envia e-mails (registra um aviso no console).
 // ─────────────────────────────────────────────────────────────────────────────
 export const EMAILJS = {
-  serviceId: "COLE_AQUI_O_SERVICE_ID",
-  templateId: "COLE_AQUI_O_TEMPLATE_ID",
-  publicKey: "COLE_AQUI_A_PUBLIC_KEY"
+  serviceId: "service_kjulgyj",
+  templateId: "template_7ak77hj",
+  publicKey: "6gbXKJzPIOA78fMhR"
 };
 
 export function notificacoesAtivas() {
