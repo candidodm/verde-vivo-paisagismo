@@ -24,8 +24,19 @@ Sistema web de solicitação e acompanhamento de serviços de paisagismo.
 
 ## 🎬 Vídeo de Demonstração
 
-Link do vídeo demonstrando o funcionamento da aplicação:
-https://www.youtube.com/shorts/gwSLjm6oW7w
+Vídeo da versão 2 (5º semestre), com as três jornadas — cliente, gestor e equipe de campo:
+https://drive.google.com/file/d/14zigUdKmj9tCE_8QqURxSfjEGE1fzA90/view?usp=sharing
+
+Vídeo da versão 1 (4º semestre): https://www.youtube.com/shorts/gwSLjm6oW7w
+
+---
+
+## 🏷️ Versões
+
+| Versão | Entrega | Release |
+|---|---|---|
+| 1 | Projeto Integrador do 4º semestre | [v1-quarto-semestre](https://github.com/candidodm/verde-vivo-paisagismo/releases/tag/v1-quarto-semestre) |
+| 2 | Projeto Integrador do 5º semestre (MVP) | [v2-quinto-semestre](https://github.com/candidodm/verde-vivo-paisagismo/releases/tag/v2-quinto-semestre) |
 
 ---
 
@@ -41,11 +52,11 @@ O **Verde Vivo** é uma aplicação web que permite que clientes solicitem e aco
 
 - **Formulário de solicitação** — cliente preenche nome, telefone, endereço, tipo de serviço, descrição e envia foto do local
 - **Protocolo automático** — gerado ao enviar a solicitação (ex: `VVABC123`)
-- **Acompanhamento de status** — cliente busca pelo protocolo ou telefone e vê o progresso
+- **Acompanhamento de status** — cliente busca pelo protocolo e vê o progresso
 - **Stepper visual** — Solicitado → Em Execução → Concluído
 - **Painel administrativo** — equipe filtra, visualiza e atualiza o status de cada solicitação
 
-### Versão 2 — Projeto Integrador do 5º semestre (em desenvolvimento)
+### Versão 2 — Projeto Integrador do 5º semestre (entregue em novembro de 2026)
 
 - [x] **Autenticação com perfis** (Firebase Authentication): cliente, equipe de campo e administrador, com login, cadastro e recuperação de senha — substitui o login fixo no código
 - [x] **Regras de segurança do Firestore** por perfil e consulta pública por protocolo sem expor dados pessoais
@@ -166,7 +177,7 @@ Veja o passo a passo em [CONFIGURAR-FIREBASE.md](CONFIGURAR-FIREBASE.md).
 | Pedro Henrique Beltrão de Souza | [@pedrohenrique-cyber](https://github.com/pedrohenrique-cyber) |
 | Roger Alves da Silva | [@rogeralves1704](https://github.com/rogeralves1704) |
 
-**Professor:** Me. Anderson Lopes  
+**Professor:** Prof. Me. Anderson Clayton  
 **Instituição:** Centro Universitário SENAC  
-**Disciplina:** Desenvolvimento de Sistemas Orientado a Dispositivos Móveis e Baseados na Web  
+**Disciplina:** Projeto Integrador: Análise de Soluções Integradas para Organizações (5º semestre)  
 **Ano:** 2026
