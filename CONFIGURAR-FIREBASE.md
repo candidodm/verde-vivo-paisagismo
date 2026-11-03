@@ -53,6 +53,8 @@ Depois disso, **membros da equipe e outros administradores são cadastrados pelo
 
 Enquanto as chaves não forem preenchidas, o sistema funciona normalmente — só não envia e-mails.
 
+**Configuração atual:** serviço Gmail `verdevivo.jadins@gmail.com` (`service_8vz7te2`), template `template_7ak77hj`. A *Private Key* do EmailJS nunca deve ir para o código.
+
 ## Estrutura de dados
 
 | Coleção | Conteúdo | Quem acessa |
